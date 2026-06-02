@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Univap Fichas</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Figtree:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="styles/main.css" />
+
+  <!-- React + ReactDOM (UMD) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel standalone (transpila JSX no browser) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Dados -->
+  <script src="src/data/mock.js"></script>
+  <script src="src/data/store.js"></script>
+
+  <!-- Componentes base (ordem: dependências primeiro) -->
+  <script type="text/babel" src="src/components/Icon.jsx"></script>
+  <script type="text/babel" src="src/components/UI.jsx"></script>
+  <script type="text/babel" src="src/components/TweaksPanel.jsx"></script>
+  <script type="text/babel" src="src/components/Layout.jsx"></script>
+
+  <!-- Telas -->
+  <script type="text/babel" src="src/screens/Login.jsx"></script>
+  <script type="text/babel" src="src/screens/professor/Inicio.jsx"></script>
+  <script type="text/babel" src="src/screens/professor/NovaAvaliacao.jsx"></script>
+  <script type="text/babel" src="src/screens/professor/GerenciarFichas.jsx"></script>
+  <script type="text/babel" src="src/screens/professor/Dashboard.jsx"></script>
+  <script type="text/babel" src="src/screens/Misc.jsx"></script>
+  <script type="text/babel" src="src/screens/aluno/MeuGrupo.jsx"></script>
+  <script type="text/babel" src="src/screens/coordenador/Materias.jsx"></script>
+  <script type="text/babel" src="src/screens/coordenador/Professores.jsx"></script>
+  <script type="text/babel" src="src/screens/aluno/HistoricoAvaliacoes.jsx"></script>
+
+  <!-- App (entry point) -->
+  <script type="text/babel" src="src/App.jsx"></script>
+</body>
+</html>
