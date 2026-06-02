@@ -8,6 +8,7 @@ function fmtData(iso) {
 function GerenciarFichas({ user, onView }) {
   const [q,        setQ]        = useState("");
   const [filtDisc, setFiltDisc] = useState("");
+  const [detalhe,  setDetalhe]  = useState(null);
 
   const todasAvals = loadAvaliacoes().filter(a => a.professorEmail === user?.email);
   const disciplinas = [...new Set(todasAvals.map(a => a.disciplina))].sort();
@@ -17,6 +18,10 @@ function GerenciarFichas({ user, onView }) {
            a.disciplina.toLowerCase().includes(q.toLowerCase())) &&
     (!filtDisc || a.disciplina === filtDisc)
   ).sort((a, b) => b.data.localeCompare(a.data));
+
+  if (detalhe) {
+    return <DetalheFichaPage aval={detalhe} onVoltar={() => setDetalhe(null)} />;
+  }
 
   return (
     <>
@@ -71,7 +76,7 @@ function GerenciarFichas({ user, onView }) {
                     <td><NotaBadge nota={a.nota} /></td>
                     <td><StatusBadge status={a.status} /></td>
                     <td className="ta-r">
-                      <button className="uv-icon-btn sm" title="Ver ficha" onClick={() => onView(a)}>
+                      <button className="uv-icon-btn sm" title="Ver ficha" onClick={() => setDetalhe(a)}>
                         <Icon name="eye" size={16} />
                       </button>
                     </td>
@@ -86,4 +91,89 @@ function GerenciarFichas({ user, onView }) {
   );
 }
 
-Object.assign(window, { GerenciarFichas, fmtData });
+function DetalheFichaPage({ aval, onVoltar }) {
+  const grupo = loadGrupos().find(g => g.nome === aval.grupoNome);
+  const integrantes = grupo ? grupo.integrantes : [];
+
+  return (
+    <>
+      <PageHeading
+        title={aval.grupoNome}
+        sub={`Ficha de Avaliação · ${fmtData(aval.data)}`}
+        action={<Button variant="ghost" icon="chevronLeft" onClick={onVoltar}>Voltar</Button>}
+      />
+
+      <div className="uv-det-nota-wrap">
+        <div className="uv-det-nota-box">
+          <span className="uv-det-nota-label">Nota Final</span>
+          <span className={`uv-det-nota-val uv-nota-${notaTone(aval.nota)}`}>
+            {aval.nota.toFixed(1)}
+          </span>
+        </div>
+        <StatusBadge status={aval.status} />
+      </div>
+
+      <Card className="uv-mb-card">
+        <div className="uv-grupo-info-grid">
+          <MetaItem label="Disciplina"  value={aval.disciplina} />
+          <MetaItem label="Professor"   value={aval.professorNome} />
+          <MetaItem label="Data"        value={fmtData(aval.data)} />
+          <MetaItem label="Grupo"       value={aval.grupoNome} />
+        </div>
+      </Card>
+
+      {integrantes.length > 0 && (
+        <Card className="uv-mb-card">
+          <CardHead title="Integrantes" sub={`${integrantes.length} membro${integrantes.length !== 1 ? "s" : ""}`} />
+          <ol className="uv-integrantes" style={{ padding: "6px 4px 2px" }}>
+            {integrantes.map((m, i) => (
+              <li key={i} className="uv-integrante">
+                <span className="uv-integrante-num">{i + 1}</span>
+                <Avatar nome={m.nome} size={32} idx={i} />
+                <div className="uv-integrante-info">
+                  <span className="uv-integrante-nome">
+                    {m.nome}
+                    {m.lider && <Badge tone="blue" className="uv-lider-badge">Líder</Badge>}
+                  </span>
+                  <span className="uv-integrante-mat">Matrícula {m.matricula}</span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
+      {aval.anotacoes && (
+        <Card className="uv-mb-card">
+          <CardHead title="Observações do Professor" />
+          <p className="uv-det-texto">{aval.anotacoes}</p>
+        </Card>
+      )}
+
+      {(aval.positivos || aval.melhorar) && (
+        <div className="uv-grid-2">
+          {aval.positivos && (
+            <Card>
+              <CardHead title="Elogios" />
+              <div className="uv-det-bloco pos">
+                <Icon name="trendingUp" size={15} />
+                <p>{aval.positivos}</p>
+              </div>
+            </Card>
+          )}
+          {aval.melhorar && (
+            <Card>
+              <CardHead title="Pontos de Melhoria" />
+              <div className="uv-det-bloco neg">
+                <Icon name="arrowRight" size={15} />
+                <p>{aval.melhorar}</p>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
+
+Object.assign(window, { GerenciarFichas, DetalheFichaPage, fmtData });

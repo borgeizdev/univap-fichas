@@ -1,6 +1,6 @@
 /* ============ Univap Fichas — styles ============ */
 :root {
-  --uv-font: 'Roboto', system-ui, sans-serif;
+  --uv-font: 'Plus Jakarta Sans', system-ui, sans-serif;
   --uv-primary: #2364a6;
   --uv-primary-dark: #1b4d80;
   --uv-card-radius: 16px;
@@ -14,8 +14,8 @@
   --text-3: #8a97a8;
   --border: #e7eaef;
   --border-2: #eef1f5;
-  --shadow-sm: 0 1px 2px rgba(16,33,55,.06), 0 1px 3px rgba(16,33,55,.05);
-  --shadow-md: 0 2px 6px rgba(16,33,55,.06), 0 8px 24px rgba(16,33,55,.07);
+  --shadow-sm: 0 1px 3px rgba(16,33,55,.08), 0 2px 6px rgba(16,33,55,.06);
+  --shadow-md: 0 4px 12px rgba(16,33,55,.08), 0 8px 28px rgba(16,33,55,.09);
   --shadow-lg: 0 10px 40px rgba(16,33,55,.14);
 
   --green: #16855a; --green-bg: #e3f5ec; --green-bd:#c4ead7;
@@ -89,7 +89,7 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 /* ============ cards ============ */
 .uv-card {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--uv-card-radius); padding: 20px; box-shadow: var(--shadow-sm);
+  border-radius: var(--uv-card-radius); padding: 22px; box-shadow: var(--shadow-sm);
 }
 .uv-card-hover { transition: transform .16s, box-shadow .16s, border-color .16s; }
 .uv-card-hover:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--blue-bd); }
@@ -171,7 +171,7 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .uv-bar-col { display: flex; flex-direction: column; align-items: center; height: 100%; gap: 8px; }
 .uv-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
 .uv-bar-fill {
-  width: 62%; max-width: 42px; background: linear-gradient(180deg, var(--uv-primary), color-mix(in srgb, var(--uv-primary) 70%, #6fb0ec));
+  width: 70%; max-width: 48px; background: linear-gradient(180deg, var(--uv-primary), color-mix(in srgb, var(--uv-primary) 70%, #6fb0ec));
   border-radius: 7px 7px 3px 3px; position: relative; min-height: 4px; transition: height .5s cubic-bezier(.2,.7,.3,1);
 }
 .uv-bar-val { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 12px; font-weight: 700; color: var(--text-2); }
@@ -209,8 +209,8 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 [data-theme="dark"] .uv-login { background: linear-gradient(160deg, #0e1118 0%, #131a2b 60%, #0c1830 100%); }
 .uv-login-card {
   width: 100%; max-width: 410px; background: var(--surface); border: 1px solid var(--border);
-  border-radius: 14px; box-shadow: var(--shadow-lg); padding: 38px 34px;
-  display: flex; flex-direction: column; gap: 16px;
+  border-radius: var(--uv-card-radius); box-shadow: var(--shadow-lg); padding: 40px 36px;
+  display: flex; flex-direction: column; gap: 18px;
 }
 .uv-login-brand { text-align: center; margin-bottom: 6px; }
 .uv-login-logo { width: 200px; height: auto; display: block; margin: 0 auto 8px; }
@@ -254,7 +254,7 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .uv-topbar-brand {
   position: relative; z-index: 1;
   background: transparent;
-  padding: 0 36px; height: 170px;
+  padding: 0 36px; height: 148px;
   display: flex; align-items: center; gap: 28px;
 }
 
@@ -307,12 +307,12 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 
 /* ---- content ---- */
 .uv-content { flex: 1; display: flex; flex-direction: column; }
-.uv-content-inner { flex: 1; padding: 30px 28px; max-width: 1240px; width: 100%; margin: 0 auto; }
+.uv-content-inner { flex: 1; padding: 32px 32px; max-width: 1240px; width: 100%; margin: 0 auto; }
 .uv-page-footer { text-align: right; padding: 20px 28px 26px; font-size: 12px; color: var(--text-3); }
 
 /* ---- page heading ---- */
-.uv-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
-.uv-page-title { font-size: 25px; font-weight: 800; letter-spacing: -.025em; }
+.uv-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 26px; flex-wrap: wrap; }
+.uv-page-title { font-size: 26px; font-weight: 800; letter-spacing: -.03em; }
 .uv-page-sub { font-size: 14px; color: var(--text-3); margin-top: 4px; }
 
 /* ---- grids ---- */
@@ -320,8 +320,8 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .uv-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .uv-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .uv-gap-sm { gap: 14px; }
-.uv-grid-3 + .uv-grid-3, .uv-grid-2 + .uv-grid-2, .uv-charts { margin-top: 18px; }
-.uv-stats { margin-bottom: 18px; }
+.uv-grid-3 + .uv-grid-3, .uv-grid-2 + .uv-grid-2, .uv-charts { margin-top: 22px; }
+.uv-stats { margin-bottom: 22px; }
 
 /* ---- lists ---- */
 .uv-quicksearch { margin-bottom: 20px; }
@@ -406,10 +406,14 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .uv-page-num.active { background: var(--uv-primary); color: #fff; }
 
 /* ---- stat cards ---- */
-.uv-stat { display: flex; flex-direction: column; gap: 8px; }
-.uv-stat-label { font-size: 12.5px; font-weight: 600; color: var(--text-3); }
-.uv-stat-value { font-size: 30px; font-weight: 800; letter-spacing: -.03em; line-height: 1; color: var(--text); }
+.uv-stat { display: flex; flex-direction: column; gap: 10px; }
+.uv-stat-label { font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; }
+.uv-stat-value { font-size: 32px; font-weight: 800; letter-spacing: -.03em; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
 .uv-stat-delta { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 700; color: var(--green); }
+.uv-stat.tone-blue   { border-top: 3px solid var(--blue); }
+.uv-stat.tone-green  { border-top: 3px solid var(--green); }
+.uv-stat.tone-amber  { border-top: 3px solid var(--amber); }
+.uv-stat.tone-violet { border-top: 3px solid var(--violet); }
 
 /* ---- status badge + dot ---- */
 .uv-status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
@@ -521,7 +525,7 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .uv-det-bloco.neg p { color: var(--text-2); }
 
 /* ============ meu grupo ============ */
-.uv-form-stack { display: flex; flex-direction: column; gap: 14px; padding: 4px 2px 6px; }
+.uv-form-stack { display: flex; flex-direction: column; gap: 16px; padding: 4px 2px 8px; }
 .uv-form-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
 .uv-actions-cell { display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; }
 .uv-tr-editing { background: color-mix(in srgb, var(--uv-primary) 6%, transparent); }
@@ -538,7 +542,7 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
   .uv-grid-4 { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 860px) {
-  .uv-topbar-brand { padding: 0 18px; height: 110px; }
+  .uv-topbar-brand { padding: 0 18px; height: 100px; }
   .uv-topbar-logo  { height: 40px; }
   .uv-topbar-meta  { display: none; }
   .uv-topbar-bg-full { width: 65%; }

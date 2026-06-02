@@ -36,8 +36,8 @@ function ProfInicio({ user, go }) {
 
       <div className="uv-grid-3 uv-stats">
         <StatCard icon="clipboardList" label="Avaliações lançadas" value={avaliacoes.length} tone="blue" />
-        <StatCard icon="clock"         label="Grupos pendentes"    value={pendentes.length}  tone="amber" />
-        <StatCard icon="award"         label="Média geral"         value={media}             tone="green" />
+        <StatCard icon="clock"         label="Grupos pendentes"    value={pendentes.length}  tone="blue" />
+        <StatCard icon="award"         label="Média geral"         value={media}             tone="blue" />
       </div>
 
       <div className="uv-grid-2">

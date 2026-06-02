@@ -51,9 +51,9 @@ function Dashboard({ onView }) {
 
       <div className="uv-grid-4 uv-stats">
         <StatCard icon="clipboardList" label="Total de avaliações" value={total}     tone="blue" />
-        <StatCard icon="clock"         label="Pendentes"           value={pend}      tone="amber" />
-        <StatCard icon="award"         label="Média geral"         value={media}     tone="green" />
-        <StatCard icon="users"         label="Turmas ativas"       value={numTurmas} tone="violet" />
+        <StatCard icon="clock"         label="Pendentes"           value={pend}      tone="blue" />
+        <StatCard icon="award"         label="Média geral"         value={media}     tone="blue" />
+        <StatCard icon="users"         label="Turmas ativas"       value={numTurmas} tone="blue" />
       </div>
 
       {avalPorMes.length > 0 && mediaPorTurma.length > 0 && (

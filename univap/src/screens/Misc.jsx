@@ -89,7 +89,6 @@ function ViewFichaModal({ aval, onClose }) {
         </div>
 
         <div className="uv-drawer-foot">
-          <Badge tone="green" dot>Somente leitura</Badge>
           <Button variant="ghost" onClick={onClose}>Fechar</Button>
         </div>
       </aside>
