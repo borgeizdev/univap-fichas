@@ -185,7 +185,7 @@ function CadastroProfessores() {
                         <button className="uv-icon-btn sm" title="Editar" onClick={() => iniciarEdicao(i)}>
                           <Icon name="edit" size={15} />
                         </button>
-                        <button className="uv-icon-btn sm" title="Remover" onClick={() => remover(i)} style={{ color: "var(--red)" }}>
+                        <button className="uv-icon-btn sm danger" title="Remover" onClick={() => remover(i)}>
                           <Icon name="x" size={16} />
                         </button>
                       </div>

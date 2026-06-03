@@ -78,10 +78,9 @@ function CadastroMaterias() {
                       <td>{m}</td>
                       <td className="ta-r">
                         <button
-                          className="uv-icon-btn sm"
+                          className="uv-icon-btn sm danger"
                           title="Remover matéria"
                           onClick={() => remover(i)}
-                          style={{ color: "var(--red)" }}
                         >
                           <Icon name="x" size={16} />
                         </button>

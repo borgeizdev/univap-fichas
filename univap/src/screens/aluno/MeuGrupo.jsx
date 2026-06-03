@@ -255,7 +255,7 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
                   <td className="uv-td-muted">{m.matricula}</td>
                   <td className="ta-r">
                     {!m.lider && (
-                      <button className="uv-icon-btn sm" title="Remover integrante" onClick={() => remover(i)} style={{ color: "var(--red)" }}>
+                      <button className="uv-icon-btn sm danger" title="Remover integrante" onClick={() => remover(i)}>
                         <Icon name="x" size={16} />
                       </button>
                     )}

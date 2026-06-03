@@ -232,6 +232,8 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 }
 .uv-icon-btn:hover { background: var(--surface-hover); color: var(--text); }
 .uv-icon-btn.sm { width: 32px; height: 32px; border-radius: 8px; }
+.uv-icon-btn.danger { color: var(--red); transition: background .15s, color .15s, border-color .15s; }
+.uv-icon-btn.danger:hover { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); transform: scale(1.1); }
 
 /* ---- topbar container unificado ---- */
 .uv-topbar {
