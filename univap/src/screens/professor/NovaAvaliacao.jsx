@@ -60,7 +60,13 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
     nota: "", anotacoes: "", positivos: "", melhorar: "",
   });
   const [errors, setErrors] = useState({});
+  const [integrantesAval, setIntegrantesAval] = useState(
+    grupo.integrantes.map(m => ({ nome: m.nome, matricula: m.matricula, nota: "", obs: "" }))
+  );
+
   const set = (k) => (val) => setF(s => ({ ...s, [k]: val.target ? val.target.value : val }));
+  const updIntegrante = (i, k) => (e) =>
+    setIntegrantesAval(arr => arr.map((x, j) => j === i ? { ...x, [k]: e.target.value } : x));
 
   const validate = () => {
     const e = {};
@@ -85,6 +91,12 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
       anotacoes: f.anotacoes,
       positivos: f.positivos,
       melhorar: f.melhorar,
+      integrantesAval: integrantesAval.map(x => ({
+        nome: x.nome,
+        matricula: x.matricula,
+        nota: x.nota !== "" ? parseFloat(x.nota) : null,
+        obs: x.obs.trim(),
+      })),
       data: new Date().toISOString().split("T")[0],
       status: "Publicada",
     }]);
@@ -100,25 +112,39 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
         action={<Button variant="ghost" icon="chevronLeft" onClick={onVoltar}>Voltar</Button>}
       />
 
+      {/* Avaliação individual por integrante */}
       <Card className="uv-mb-card">
-        <CardHead title="Integrantes do Grupo" />
+        <CardHead title="Avaliação Individual" sub="Nota e observação por integrante (opcional)" />
         <ol className="uv-integrantes" style={{ padding: "6px 4px 2px" }}>
           {grupo.integrantes.map((m, i) => (
-            <li key={`${m.nome}-${m.matricula}`} className="uv-integrante">
-              <span className="uv-integrante-num">{i + 1}</span>
-              <Avatar nome={m.nome} size={32} idx={i} />
-              <div className="uv-integrante-info">
-                <span className="uv-integrante-nome">
-                  {m.nome}
-                  {m.lider && <Badge tone="blue" className="uv-lider-badge">Líder</Badge>}
-                </span>
-                <span className="uv-integrante-mat">Matrícula {m.matricula}</span>
+            <li key={`${m.nome}-${m.matricula}`} className="uv-integrante uv-integrante-form">
+              <div className="uv-integrante-head">
+
+                <Avatar nome={m.nome} size={32} idx={i} />
+                <div className="uv-integrante-info">
+                  <span className="uv-integrante-nome">
+                    {m.nome}
+                    {m.lider && <Badge tone="blue" className="uv-lider-badge">Líder</Badge>}
+                  </span>
+                  <span className="uv-integrante-mat">Matrícula {m.matricula}</span>
+                </div>
+              </div>
+              <div className="uv-integrante-body">
+                <Field label="Nota individual">
+                  <Input type="number" min="0" max="10" step="0.1" placeholder="—"
+                    value={integrantesAval[i].nota} onChange={updIntegrante(i, "nota")} />
+                </Field>
+                <Field label="Observação">
+                  <Input placeholder="Observação sobre este integrante…"
+                    value={integrantesAval[i].obs} onChange={updIntegrante(i, "obs")} />
+                </Field>
               </div>
             </li>
           ))}
         </ol>
       </Card>
 
+      {/* Ficha do grupo */}
       <Card>
         <CardHead title="Ficha de Avaliação" />
         <div className="uv-form-stack">

@@ -118,6 +118,28 @@ function DetalheAvaliacao({ aval, onVoltar }) {
         </div>
       </Card>
 
+      {aval.integrantesAval?.length > 0 && (
+        <Card className="uv-mb-card">
+          <CardHead title="Avaliação Individual" />
+          <ol className="uv-integrantes" style={{ padding: "6px 4px 2px" }}>
+            {aval.integrantesAval.map((x, i) => (
+              <li key={x.matricula} className="uv-integrante">
+
+                <Avatar nome={x.nome} size={32} idx={i} />
+                <div className="uv-integrante-info">
+                  <span className="uv-integrante-nome">{x.nome}</span>
+                  <span className="uv-integrante-mat">Matrícula {x.matricula}</span>
+                  {x.obs && <span className="uv-integrante-obs">{x.obs}</span>}
+                </div>
+                {x.nota != null && (
+                  <div className="uv-integrante-nota-right"><NotaBadge nota={x.nota} /></div>
+                )}
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
       {aval.anotacoes && (
         <Card className="uv-mb-card">
           <CardHead title="Observações do Professor" />

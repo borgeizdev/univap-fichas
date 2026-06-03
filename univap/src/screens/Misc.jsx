@@ -43,19 +43,26 @@ function ViewFichaModal({ aval, onClose }) {
             <div className="uv-ficha-section">
               <span className="uv-ficha-section-title">Integrantes</span>
               <ol className="uv-integrantes">
-                {integrantes.map((m, i) => (
-                  <li key={`${m.nome}-${m.matricula}`} className="uv-integrante">
-                    <span className="uv-integrante-num">{i + 1}</span>
-                    <Avatar nome={m.nome} size={32} idx={i} />
-                    <div className="uv-integrante-info">
-                      <span className="uv-integrante-nome">
-                        {m.nome}
-                        {m.lider && <Badge tone="blue" className="uv-lider-badge">Líder</Badge>}
-                      </span>
-                      <span className="uv-integrante-mat">Matrícula {m.matricula}</span>
-                    </div>
-                  </li>
-                ))}
+                {integrantes.map((m, i) => {
+                  const ia = (aval.integrantesAval || []).find(x => x.matricula === m.matricula);
+                  return (
+                    <li key={`${m.nome}-${m.matricula}`} className="uv-integrante">
+
+                      <Avatar nome={m.nome} size={32} idx={i} />
+                      <div className="uv-integrante-info">
+                        <span className="uv-integrante-nome">
+                          {m.nome}
+                          {m.lider && <Badge tone="blue" className="uv-lider-badge">Líder</Badge>}
+                        </span>
+                        <span className="uv-integrante-mat">Matrícula {m.matricula}</span>
+                        {ia?.obs && <span className="uv-integrante-obs">{ia.obs}</span>}
+                      </div>
+                      {ia?.nota != null && (
+                        <div className="uv-integrante-nota-right"><NotaBadge nota={ia.nota} /></div>
+                      )}
+                    </li>
+                  );
+                })}
               </ol>
             </div>
           )}
