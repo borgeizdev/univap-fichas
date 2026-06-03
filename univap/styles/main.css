@@ -232,8 +232,8 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 }
 .uv-icon-btn:hover { background: var(--surface-hover); color: var(--text); }
 .uv-icon-btn.sm { width: 32px; height: 32px; border-radius: 8px; }
-.uv-icon-btn.danger { color: var(--red); transition: background .15s, color .15s, border-color .15s; }
-.uv-icon-btn.danger:hover { background: var(--red-bg); color: var(--red); border-color: var(--red-bd); transform: scale(1.1); }
+.uv-icon-btn.danger { color: var(--red); transition: background .15s, color .15s, border-color .15s, transform .15s; }
+.uv-icon-btn.danger:hover { background: color-mix(in srgb, var(--red) 14%, transparent); color: var(--red); border-color: color-mix(in srgb, var(--red) 30%, transparent); transform: scale(1.1); }
 
 /* ---- topbar container unificado ---- */
 .uv-topbar {
@@ -531,6 +531,8 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .uv-form-actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
 .uv-actions-cell { display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; }
 .uv-tr-editing { background: color-mix(in srgb, var(--uv-primary) 6%, transparent); }
+.uv-tr-edit-form > td { padding: 2px 8px 10px; border-top: none; }
+.uv-inline-edit { background: var(--surface-2); border: 1.5px solid var(--uv-primary); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
 .uv-grupo-info-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; padding: 8px 4px 12px; }
 .uv-mb-card { margin-bottom: 20px; }
 .uv-td-aluno { display: flex; align-items: center; gap: 10px; }

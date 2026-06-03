@@ -3,7 +3,9 @@
 function CadastroMaterias() {
   const toast = useToast();
   const [materias, setMaterias] = useState(loadDisciplinas);
-  const [nome, setNome] = useState("");
+  const [nome, setNome]         = useState("");
+  const [editIdx, setEditIdx]   = useState(null);
+  const [editNome, setEditNome] = useState("");
 
   const salvar = (ms) => { setMaterias(ms); saveDisciplinas(ms); };
 
@@ -16,12 +18,30 @@ function CadastroMaterias() {
     toast("Matéria cadastrada com sucesso!", "success");
   };
 
+  const iniciarEdicao = (i) => {
+    setEditIdx(i === editIdx ? null : i);
+    setEditNome(materias[i]);
+  };
+
+  const salvarEdicao = () => {
+    const n = editNome.trim();
+    if (!n) { toast("Informe o nome da matéria.", "warn"); return; }
+    if (materias.some((m, i) => i !== editIdx && m === n)) {
+      toast("Matéria já cadastrada.", "warn"); return;
+    }
+    salvar(materias.map((m, i) => (i === editIdx ? n : m)));
+    setEditIdx(null);
+    toast("Matéria atualizada com sucesso!", "success");
+  };
+
   const remover = (idx) => {
+    if (editIdx === idx) setEditIdx(null);
     salvar(materias.filter((_, i) => i !== idx));
     toast("Matéria removida.", "success");
   };
 
-  const onKey = (e) => { if (e.key === "Enter") adicionar(); };
+  const onKey   = (e) => { if (e.key === "Enter") adicionar(); };
+  const onKeyEd = (e) => { if (e.key === "Enter") salvarEdicao(); };
 
   return (
     <>
@@ -73,19 +93,42 @@ function CadastroMaterias() {
                 </thead>
                 <tbody>
                   {materias.map((m, i) => (
-                    <tr key={m}>
-                      <td className="uv-td-muted" style={{ width: 48 }}>{i + 1}</td>
-                      <td>{m}</td>
-                      <td className="ta-r">
-                        <button
-                          className="uv-icon-btn sm danger"
-                          title="Remover matéria"
-                          onClick={() => remover(i)}
-                        >
-                          <Icon name="x" size={16} />
-                        </button>
-                      </td>
-                    </tr>
+                    <React.Fragment key={m}>
+                      <tr className={editIdx === i ? "uv-tr-editing" : ""}>
+                        <td className="uv-td-muted" style={{ width: 48 }}>{i + 1}</td>
+                        <td>{m}</td>
+                        <td className="ta-r">
+                          <div className="uv-actions-cell">
+                            <button className="uv-icon-btn sm" title="Editar" onClick={() => iniciarEdicao(i)}>
+                              <Icon name="edit" size={15} />
+                            </button>
+                            <button className="uv-icon-btn sm danger" title="Remover matéria" onClick={() => remover(i)}>
+                              <Icon name="x" size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {editIdx === i && (
+                        <tr className="uv-tr-edit-form">
+                          <td colSpan={3}>
+                            <div className="uv-inline-edit">
+                              <Field label="Nome da Matéria">
+                                <Input
+                                  value={editNome}
+                                  onChange={(e) => setEditNome(e.target.value)}
+                                  onKeyDown={onKeyEd}
+                                  autoFocus
+                                />
+                              </Field>
+                              <div className="uv-form-actions">
+                                <Button icon="check" onClick={salvarEdicao}>Salvar</Button>
+                                <Button variant="ghost" icon="x" onClick={() => setEditIdx(null)}>Cancelar</Button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
