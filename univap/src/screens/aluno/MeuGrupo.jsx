@@ -78,6 +78,7 @@ function MeuGrupo({ user }) {
     return (
       <CriarGrupoForm
         user={user}
+        grupos={grupos}
         onSalvar={onCriar}
         onCancelar={() => setCriando(false)}
       />
@@ -96,20 +97,27 @@ function MeuGrupo({ user }) {
 }
 
 /* ── Formulário de criação ──────────────────────────────────────────────── */
-function CriarGrupoForm({ user, onSalvar, onCancelar }) {
+function gerarNomeGrupo(ano, turma, grupos) {
+  const anoNum = ano.replace(/\D/g, "");
+  const count = grupos.filter(g => g.ano === ano && g.turma === turma).length;
+  return `${anoNum}${turma} - Grupo ${count + 1}`;
+}
+
+function CriarGrupoForm({ user, grupos, onSalvar, onCancelar }) {
   const toast = useToast();
-  const [f, setF] = useState({ nome: "", curso: "", ano: "", turma: "", materia: "" });
+  const [f, setF] = useState({ curso: "", ano: "", turma: "", materia: "" });
   const set = (k) => (val) => setF(s => ({ ...s, [k]: val.target ? val.target.value : val }));
 
   const disciplinas = loadDisciplinas();
 
   const salvar = () => {
-    if (!f.nome || !f.curso || !f.ano || !f.turma) {
+    if (!f.curso || !f.ano || !f.turma) {
       toast("Preencha todos os campos do grupo.", "warn");
       return;
     }
     onSalvar({
       ...f,
+      nome: gerarNomeGrupo(f.ano, f.turma, grupos),
       id: "grp_" + Date.now(),
       criadorEmail: user.email,
       integrantes: [{ nome: user.nome, matricula: "—", lider: true }],
@@ -126,9 +134,6 @@ function CriarGrupoForm({ user, onSalvar, onCancelar }) {
       <Card>
         <CardHead title="Informações do Grupo" />
         <div className="uv-form-stack">
-          <Field label="Nome do Grupo">
-            <Input placeholder="Ex: Equipe Alpha" value={f.nome} onChange={set("nome")} />
-          </Field>
           <div className="uv-grid-3 uv-gap-sm">
             <Field label="Curso">
               <Select options={MOCK.cursos} value={f.curso} onChange={set("curso")} placeholder="Selecione…" />
