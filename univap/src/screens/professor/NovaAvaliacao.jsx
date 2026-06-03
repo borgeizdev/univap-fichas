@@ -19,8 +19,8 @@ function NovaAvaliacao({ user }) {
         />
       ) : (
         <div className="uv-grid-3">
-          {grupos.map((g, i) => (
-            <GrupoAvalCard key={i} grupo={g} onSelecionar={() => setSelecionado(g)} />
+          {grupos.map((g) => (
+            <GrupoAvalCard key={g.id} grupo={g} onSelecionar={() => setSelecionado(g)} />
           ))}
         </div>
       )}
@@ -104,7 +104,7 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
         <CardHead title="Integrantes do Grupo" />
         <ol className="uv-integrantes" style={{ padding: "6px 4px 2px" }}>
           {grupo.integrantes.map((m, i) => (
-            <li key={i} className="uv-integrante">
+            <li key={`${m.nome}-${m.matricula}`} className="uv-integrante">
               <span className="uv-integrante-num">{i + 1}</span>
               <Avatar nome={m.nome} size={32} idx={i} />
               <div className="uv-integrante-info">

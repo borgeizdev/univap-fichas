@@ -51,7 +51,7 @@ function MeuGrupo({ user }) {
           /* eslint-disable-next-line */
           <div className="uv-grid-3">
             {grupos.map((g, i) => (
-              <Card key={i} hover className="uv-grupo-card" onClick={() => setGrupoAtivo(i)}>
+              <Card key={g.id} hover className="uv-grupo-card" onClick={() => setGrupoAtivo(i)}>
                 <div className="uv-grupo-top">
                   <div>
                     <h3 className="uv-grupo-name">{g.nome}</h3>
@@ -244,7 +244,7 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
             </thead>
             <tbody>
               {grupo.integrantes.map((m, i) => (
-                <tr key={i}>
+                <tr key={`${m.nome}-${m.matricula}`}>
                   <td>
                     <div className="uv-td-aluno">
                       <Avatar nome={m.nome} size={30} idx={i} />

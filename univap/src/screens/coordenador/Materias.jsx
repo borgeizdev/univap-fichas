@@ -73,7 +73,7 @@ function CadastroMaterias() {
                 </thead>
                 <tbody>
                   {materias.map((m, i) => (
-                    <tr key={i}>
+                    <tr key={m}>
                       <td className="uv-td-muted" style={{ width: 48 }}>{i + 1}</td>
                       <td>{m}</td>
                       <td className="ta-r">

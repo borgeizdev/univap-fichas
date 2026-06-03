@@ -1,19 +1,62 @@
 /* Univap Fichas — Cadastro de Professores (Coordenador) */
 
+function ProfessorForm({ form, onChange, disciplinas, selecionadas, onToggleMat, onSubmit, submitLabel, onCancelar, showDisclaimer }) {
+  return (
+    <div className="uv-form-stack">
+      <div className="uv-grid-3 uv-gap-sm">
+        <Field label="Nome completo">
+          <Input placeholder="Ex: Prof. João Silva" value={form.nome} onChange={onChange("nome")} />
+        </Field>
+        <Field label="E-mail">
+          <Input type="email" placeholder="joao@univap.com" value={form.email} onChange={onChange("email")} />
+        </Field>
+        <Field label="Senha">
+          <Input type="password" placeholder="Senha de acesso" value={form.senha} onChange={onChange("senha")} />
+        </Field>
+      </div>
+
+      {disciplinas.length > 0 && (
+        <Field label="Matérias que leciona">
+          <div className="uv-check-grid">
+            {disciplinas.map((m) => (
+              <label key={m} className={`uv-check-item ${selecionadas.includes(m) ? "checked" : ""}`}>
+                <input type="checkbox" checked={selecionadas.includes(m)} onChange={() => onToggleMat(m)} />
+                <span>{m}</span>
+              </label>
+            ))}
+          </div>
+        </Field>
+      )}
+
+      {showDisclaimer && disciplinas.length === 0 && (
+        <div className="uv-materia-aviso">
+          <Icon name="clipboardList" size={15} />
+          Cadastre matérias primeiro para poder atribuí-las ao professor.
+        </div>
+      )}
+
+      <div className="uv-form-actions">
+        <Button icon={onCancelar ? "check" : "plus"} onClick={onSubmit}>{submitLabel}</Button>
+        {onCancelar && <Button variant="ghost" icon="x" onClick={onCancelar}>Cancelar</Button>}
+      </div>
+    </div>
+  );
+}
+
 function CadastroProfessores() {
   const toast = useToast();
-  const [profs, setProfs]     = useState(loadProfessores);
-  const [form, setForm]       = useState({ nome: "", email: "", senha: "" });
+  const [profs, setProfs]      = useState(loadProfessores);
+  const [form, setForm]        = useState({ nome: "", email: "", senha: "" });
   const [selecionadas, setSel] = useState([]);
   const [editIdx, setEditIdx]  = useState(null);
   const [editForm, setEditForm] = useState({ nome: "", email: "", senha: "" });
   const [editSel, setEditSel]  = useState([]);
   const disciplinas = loadDisciplinas();
 
-  const set    = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
-  const setEd  = (k) => (e) => setEditForm(f => ({ ...f, [k]: e.target.value }));
+  const set   = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+  const setEd = (k) => (e) => setEditForm(f => ({ ...f, [k]: e.target.value }));
 
-  const toggleMat    = (m) => setSel(s => s.includes(m) ? s.filter(x => x !== m) : [...s, m]);
+  const toggleMat     = (m) => setSel(s => s.includes(m) ? s.filter(x => x !== m) : [...s, m]);
   const toggleEditMat = (m) => setEditSel(s => s.includes(m) ? s.filter(x => x !== m) : [...s, m]);
 
   const salvarProfs = (list) => { setProfs(list); saveProfessores(list); };
@@ -44,24 +87,20 @@ function CadastroProfessores() {
     setEditSel(p.materias || []);
   };
 
-  const cancelarEdicao = () => { setEditIdx(null); };
-
   const salvarEdicao = () => {
     if (!editForm.nome.trim() || !editForm.email.trim() || !editForm.senha.trim()) {
       toast("Preencha nome, e-mail e senha.", "warn"); return;
     }
-    const emailConflito = profs.some((p, i) => i !== editIdx && p.email === editForm.email.trim());
-    if (emailConflito) {
+    if (profs.some((p, i) => i !== editIdx && p.email === editForm.email.trim())) {
       toast("Já existe um professor com este e-mail.", "warn"); return;
     }
-    const updated = profs.map((p, i) => i === editIdx ? {
+    salvarProfs(profs.map((p, i) => i === editIdx ? {
       ...p,
       nome: editForm.nome.trim(),
       email: editForm.email.trim().toLowerCase(),
       senha: editForm.senha.trim(),
       materias: editSel,
-    } : p);
-    salvarProfs(updated);
+    } : p));
     setEditIdx(null);
     toast("Professor atualizado com sucesso!", "success");
   };
@@ -82,88 +121,24 @@ function CadastroProfessores() {
       {/* Formulário de cadastro */}
       <Card style={{ marginBottom: 24 }}>
         <CardHead title="Cadastrar Professor" />
-        <div className="uv-form-stack">
-          <div className="uv-grid-3 uv-gap-sm">
-            <Field label="Nome completo">
-              <Input placeholder="Ex: Prof. João Silva" value={form.nome} onChange={set("nome")} />
-            </Field>
-            <Field label="E-mail">
-              <Input type="email" placeholder="joao@univap.com" value={form.email} onChange={set("email")} />
-            </Field>
-            <Field label="Senha">
-              <Input type="password" placeholder="Senha de acesso" value={form.senha} onChange={set("senha")} />
-            </Field>
-          </div>
-
-          {disciplinas.length > 0 && (
-            <Field label="Matérias que leciona">
-              <div className="uv-check-grid">
-                {disciplinas.map((m, i) => (
-                  <label key={i} className={`uv-check-item ${selecionadas.includes(m) ? "checked" : ""}`}>
-                    <input
-                      type="checkbox"
-                      checked={selecionadas.includes(m)}
-                      onChange={() => toggleMat(m)}
-                    />
-                    <span>{m}</span>
-                  </label>
-                ))}
-              </div>
-            </Field>
-          )}
-
-          {disciplinas.length === 0 && (
-            <div className="uv-materia-aviso">
-              <Icon name="clipboardList" size={15} />
-              Cadastre matérias primeiro para poder atribuí-las ao professor.
-            </div>
-          )}
-
-          <div className="uv-form-actions">
-            <Button icon="plus" onClick={adicionar}>Cadastrar Professor</Button>
-          </div>
-        </div>
+        <ProfessorForm
+          form={form} onChange={set}
+          disciplinas={disciplinas} selecionadas={selecionadas} onToggleMat={toggleMat}
+          onSubmit={adicionar} submitLabel="Cadastrar Professor"
+          showDisclaimer
+        />
       </Card>
 
       {/* Card de edição */}
       {editIdx !== null && (
         <Card style={{ marginBottom: 24, borderColor: "var(--uv-primary)" }}>
           <CardHead title={`Editando: ${profs[editIdx]?.nome}`} />
-          <div className="uv-form-stack">
-            <div className="uv-grid-3 uv-gap-sm">
-              <Field label="Nome completo">
-                <Input placeholder="Ex: Prof. João Silva" value={editForm.nome} onChange={setEd("nome")} />
-              </Field>
-              <Field label="E-mail">
-                <Input type="email" placeholder="joao@univap.com" value={editForm.email} onChange={setEd("email")} />
-              </Field>
-              <Field label="Senha">
-                <Input type="password" placeholder="Senha de acesso" value={editForm.senha} onChange={setEd("senha")} />
-              </Field>
-            </div>
-
-            {disciplinas.length > 0 && (
-              <Field label="Matérias que leciona">
-                <div className="uv-check-grid">
-                  {disciplinas.map((m, i) => (
-                    <label key={i} className={`uv-check-item ${editSel.includes(m) ? "checked" : ""}`}>
-                      <input
-                        type="checkbox"
-                        checked={editSel.includes(m)}
-                        onChange={() => toggleEditMat(m)}
-                      />
-                      <span>{m}</span>
-                    </label>
-                  ))}
-                </div>
-              </Field>
-            )}
-
-            <div className="uv-form-actions">
-              <Button icon="check" onClick={salvarEdicao}>Salvar Alterações</Button>
-              <Button variant="ghost" icon="x" onClick={cancelarEdicao}>Cancelar</Button>
-            </div>
-          </div>
+          <ProfessorForm
+            form={editForm} onChange={setEd}
+            disciplinas={disciplinas} selecionadas={editSel} onToggleMat={toggleEditMat}
+            onSubmit={salvarEdicao} submitLabel="Salvar Alterações"
+            onCancelar={() => setEditIdx(null)}
+          />
         </Card>
       )}
 
@@ -189,7 +164,7 @@ function CadastroProfessores() {
               </thead>
               <tbody>
                 {profs.map((p, i) => (
-                  <tr key={i} className={editIdx === i ? "uv-tr-editing" : ""}>
+                  <tr key={p.id} className={editIdx === i ? "uv-tr-editing" : ""}>
                     <td>
                       <div className="uv-td-aluno">
                         <Avatar nome={p.nome} size={30} idx={i} />
@@ -200,7 +175,7 @@ function CadastroProfessores() {
                     <td>
                       <div className="uv-mat-tags">
                         {p.materias.length > 0
-                          ? p.materias.map((m, j) => <span key={j} className="uv-chip">{m}</span>)
+                          ? p.materias.map((m) => <span key={m} className="uv-chip">{m}</span>)
                           : <span className="uv-td-muted">—</span>
                         }
                       </div>

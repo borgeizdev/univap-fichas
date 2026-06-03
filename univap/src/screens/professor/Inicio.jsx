@@ -73,8 +73,8 @@ function ProfInicio({ user, go }) {
               text="Todos os grupos já receberam ao menos uma avaliação." />
           ) : (
             <div className="uv-list">
-              {pendentes.slice(0, 4).map((g, i) => (
-                <div key={i} className="uv-list-row rich static">
+              {pendentes.slice(0, 4).map((g) => (
+                <div key={g.id} className="uv-list-row rich static">
                   <div className="uv-list-rich-left">
                     <span className="uv-list-label">{g.nome}</span>
                     <span className="uv-list-meta">

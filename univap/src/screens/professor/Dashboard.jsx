@@ -84,7 +84,7 @@ function Dashboard({ onView }) {
                   <button key={a.id} className="uv-list-row rich" onClick={() => onView(a)}>
                     <div className="uv-list-rich-left">
                       <span className="uv-list-label">{a.grupoNome}</span>
-                      <span className="uv-list-meta">{a.disciplina} · {fmtData(a.data)}</span>
+                      <span className="uv-list-meta">{a.disciplina} · {fmtDataBR(a.data)}</span>
                     </div>
                     <NotaBadge nota={a.nota} />
                   </button>
@@ -99,8 +99,8 @@ function Dashboard({ onView }) {
                 text="Todos os grupos já possuem pelo menos uma avaliação." />
             ) : (
               <div className="uv-list">
-                {pendentes.map((g, i) => (
-                  <div key={i} className="uv-list-row rich static">
+                {pendentes.map((g) => (
+                  <div key={g.id} className="uv-list-row rich static">
                     <div className="uv-list-rich-left">
                       <span className="uv-list-label">{g.nome}</span>
                       <span className="uv-list-meta">

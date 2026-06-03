@@ -1,10 +1,4 @@
 /* Univap Fichas — Gerenciar Fichas */
-function fmtData(iso) {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
-}
-
 function GerenciarFichas({ user, onView }) {
   const [q,        setQ]        = useState("");
   const [filtDisc, setFiltDisc] = useState("");
@@ -72,7 +66,7 @@ function GerenciarFichas({ user, onView }) {
                   <tr key={a.id}>
                     <td><span>{a.grupoNome}</span></td>
                     <td className="uv-td-muted">{a.disciplina}</td>
-                    <td className="uv-td-muted">{fmtData(a.data)}</td>
+                    <td className="uv-td-muted">{fmtDataBR(a.data)}</td>
                     <td><NotaBadge nota={a.nota} /></td>
                     <td><StatusBadge status={a.status} /></td>
                     <td className="ta-r">
@@ -99,7 +93,7 @@ function DetalheFichaPage({ aval, onVoltar }) {
     <>
       <PageHeading
         title={aval.grupoNome}
-        sub={`Ficha de Avaliação · ${fmtData(aval.data)}`}
+        sub={`Ficha de Avaliação · ${fmtDataBR(aval.data)}`}
         action={<Button variant="ghost" icon="chevronLeft" onClick={onVoltar}>Voltar</Button>}
       />
 
@@ -117,7 +111,7 @@ function DetalheFichaPage({ aval, onVoltar }) {
         <div className="uv-grupo-info-grid">
           <MetaItem label="Disciplina"  value={aval.disciplina} />
           <MetaItem label="Professor"   value={aval.professorNome} />
-          <MetaItem label="Data"        value={fmtData(aval.data)} />
+          <MetaItem label="Data"        value={fmtDataBR(aval.data)} />
           <MetaItem label="Grupo"       value={aval.grupoNome} />
         </div>
       </Card>
@@ -127,7 +121,7 @@ function DetalheFichaPage({ aval, onVoltar }) {
           <CardHead title="Integrantes" sub={`${integrantes.length} membro${integrantes.length !== 1 ? "s" : ""}`} />
           <ol className="uv-integrantes" style={{ padding: "6px 4px 2px" }}>
             {integrantes.map((m, i) => (
-              <li key={i} className="uv-integrante">
+              <li key={`${m.nome}-${m.matricula}`} className="uv-integrante">
                 <span className="uv-integrante-num">{i + 1}</span>
                 <Avatar nome={m.nome} size={32} idx={i} />
                 <div className="uv-integrante-info">
@@ -176,4 +170,4 @@ function DetalheFichaPage({ aval, onVoltar }) {
   );
 }
 
-Object.assign(window, { GerenciarFichas, DetalheFichaPage, fmtData });
+Object.assign(window, { GerenciarFichas, DetalheFichaPage });
