@@ -67,7 +67,7 @@ function GerenciarFichas({ user, onView }) {
                     <td><span>{a.grupoNome}</span></td>
                     <td className="uv-td-muted">{a.disciplina}</td>
                     <td className="uv-td-muted">{fmtDataBR(a.data)}</td>
-                    <td><NotaBadge nota={a.nota} /></td>
+                    <td>{a.nota != null ? <NotaBadge nota={a.nota} /> : <span className="uv-td-muted">—</span>}</td>
                     <td><StatusBadge status={a.status} /></td>
                     <td className="ta-r">
                       <button className="uv-icon-btn sm" title="Ver ficha" onClick={() => setDetalhe(a)}>
@@ -98,12 +98,6 @@ function DetalheFichaPage({ aval, onVoltar }) {
       />
 
       <div className="uv-det-nota-wrap">
-        <div className="uv-det-nota-box">
-          <span className="uv-det-nota-label">Nota Final</span>
-          <span className={`uv-det-nota-val uv-nota-${notaTone(aval.nota)}`}>
-            {aval.nota.toFixed(1)}
-          </span>
-        </div>
         <StatusBadge status={aval.status} />
       </div>
 

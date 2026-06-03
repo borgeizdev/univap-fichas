@@ -18,15 +18,8 @@ function ViewFichaModal({ aval, onClose }) {
 
         <div className="uv-drawer-body">
 
-          {/* Nota + status unificados */}
+          {/* Status */}
           <div className="uv-ficha-hero">
-            <div className="uv-ficha-hero-left">
-              <span className="uv-ficha-nota-val uv-nota-big uv-nota-{notaTone(aval.nota)}"
-                style={{ color: `var(--${notaTone(aval.nota) === "green" ? "green" : notaTone(aval.nota) === "amber" ? "amber" : "red"})` }}>
-                {aval.nota.toFixed(1)}
-              </span>
-              <span className="uv-ficha-nota-label">Nota final</span>
-            </div>
             <StatusBadge status={aval.status} />
           </div>
 

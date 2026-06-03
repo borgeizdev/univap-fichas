@@ -16,8 +16,9 @@ function Dashboard({ onView }) {
   const total = avaliacoes.length;
   const avaliados = new Set(avaliacoes.map(a => a.grupoNome));
   const pend   = grupos.filter(g => !avaliados.has(g.nome)).length;
-  const media  = total > 0
-    ? (avaliacoes.reduce((s, a) => s + a.nota, 0) / total).toFixed(1)
+  const comNota = avaliacoes.filter(a => a.nota != null);
+  const media  = comNota.length > 0
+    ? (comNota.reduce((s, a) => s + a.nota, 0) / comNota.length).toFixed(1)
     : "—";
   const numTurmas = [...new Set(grupos.map(g => `${(g.ano||"").replace(" ano","")}${g.turma}`))].length;
 
@@ -36,6 +37,7 @@ function Dashboard({ onView }) {
 
   const turmaSum = {}, turmaCount = {};
   avaliacoes.forEach(a => {
+    if (a.nota == null) return;
     const g = grupos.find(x => x.nome === a.grupoNome);
     if (!g) return;
     const key = `${(g.ano||"").replace(" ano","")}${g.turma}`;
@@ -86,7 +88,7 @@ function Dashboard({ onView }) {
                       <span className="uv-list-label">{a.grupoNome}</span>
                       <span className="uv-list-meta">{a.disciplina} · {fmtDataBR(a.data)}</span>
                     </div>
-                    <NotaBadge nota={a.nota} />
+                    {a.nota != null && <NotaBadge nota={a.nota} />}
                   </button>
                 ))}
               </div>

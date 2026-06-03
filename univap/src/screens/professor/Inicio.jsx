@@ -26,8 +26,9 @@ function ProfInicio({ user, go }) {
   const avaliados = new Set(avaliacoes.map(a => a.grupoNome));
   const pendentes = grupos.filter(g => !avaliados.has(g.nome));
   const ultimas = [...avaliacoes].sort((a, b) => b.data.localeCompare(a.data)).slice(0, 3);
-  const media = avaliacoes.length > 0
-    ? (avaliacoes.reduce((s, a) => s + a.nota, 0) / avaliacoes.length).toFixed(1)
+  const comNota = avaliacoes.filter(a => a.nota != null);
+  const media = comNota.length > 0
+    ? (comNota.reduce((s, a) => s + a.nota, 0) / comNota.length).toFixed(1)
     : "—";
 
   return (
@@ -55,7 +56,7 @@ function ProfInicio({ user, go }) {
                     <span className="uv-list-label">{a.grupoNome}</span>
                     <span className="uv-list-meta">{a.disciplina} · {fmtDataBR(a.data)}</span>
                   </div>
-                  <NotaBadge nota={a.nota} />
+                  {a.nota != null && <NotaBadge nota={a.nota} />}
                 </div>
               ))}
             </div>

@@ -57,7 +57,7 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
   const materias = getProfMaterias(user.email) || loadDisciplinas();
   const [f, setF] = useState({
     disciplina: grupo.materia || "",
-    nota: "", anotacoes: "", positivos: "", melhorar: "",
+    anotacoes: "", positivos: "", melhorar: "",
   });
   const [errors, setErrors] = useState({});
   const [integrantesAval, setIntegrantesAval] = useState(
@@ -70,16 +70,13 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
 
   const validate = () => {
     const e = {};
-    const n = parseFloat(f.nota);
-    if (f.nota === "" || isNaN(n)) e.nota = "Informe a nota.";
-    else if (n < 0 || n > 10)     e.nota = "A nota deve ser entre 0 e 10.";
-    if (!f.disciplina)             e.disciplina = "Selecione a disciplina.";
+    if (!f.disciplina) e.disciplina = "Selecione a disciplina.";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const publicar = () => {
-    if (!validate()) { toast("Verifique os campos obrigatórios.", "warn"); return; }
+    if (!validate()) { toast("Selecione a disciplina.", "warn"); return; }
     saveAvaliacoes([...loadAvaliacoes(), {
       id: "aval_" + Date.now(),
       grupoNome: grupo.nome,
@@ -87,7 +84,7 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
       professorEmail: user.email,
       professorNome: user.nome,
       disciplina: f.disciplina,
-      nota: parseFloat(f.nota),
+      nota: null,
       anotacoes: f.anotacoes,
       positivos: f.positivos,
       melhorar: f.melhorar,
@@ -112,53 +109,47 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
         action={<Button variant="ghost" icon="chevronLeft" onClick={onVoltar}>Voltar</Button>}
       />
 
-      {/* Avaliação individual por integrante */}
+      {/* Disciplina + integrantes com nota/obs individual */}
       <Card className="uv-mb-card">
-        <CardHead title="Avaliação Individual" sub="Nota e observação por integrante (opcional)" />
-        <ol className="uv-integrantes" style={{ padding: "6px 4px 2px" }}>
-          {grupo.integrantes.map((m, i) => (
-            <li key={`${m.nome}-${m.matricula}`} className="uv-integrante uv-integrante-form">
-              <div className="uv-integrante-head">
+        <div className="uv-form-stack">
+          <Field label="Disciplina" error={errors.disciplina}>
+            <Select options={materias} value={f.disciplina} onChange={set("disciplina")}
+              placeholder="Selecione…" error={errors.disciplina} />
+          </Field>
 
-                <Avatar nome={m.nome} size={32} idx={i} />
-                <div className="uv-integrante-info">
-                  <span className="uv-integrante-nome">
-                    {m.nome}
-                    {m.lider && <Badge tone="blue" className="uv-lider-badge">Líder</Badge>}
-                  </span>
-                  <span className="uv-integrante-mat">Matrícula {m.matricula}</span>
+          <ol className="uv-integrantes">
+            {grupo.integrantes.map((m, i) => (
+              <li key={`${m.nome}-${m.matricula}`} className="uv-integrante uv-integrante-form">
+                <div className="uv-integrante-head">
+                  <Avatar nome={m.nome} size={32} idx={i} />
+                  <div className="uv-integrante-info">
+                    <span className="uv-integrante-nome">
+                      {m.nome}
+                      {m.lider && <Badge tone="blue" className="uv-lider-badge">Líder</Badge>}
+                    </span>
+                    <span className="uv-integrante-mat">Matrícula {m.matricula}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="uv-integrante-body">
-                <Field label="Nota individual">
-                  <Input type="number" min="0" max="10" step="0.1" placeholder="—"
-                    value={integrantesAval[i].nota} onChange={updIntegrante(i, "nota")} />
-                </Field>
-                <Field label="Observação">
-                  <Input placeholder="Observação sobre este integrante…"
-                    value={integrantesAval[i].obs} onChange={updIntegrante(i, "obs")} />
-                </Field>
-              </div>
-            </li>
-          ))}
-        </ol>
+                <div className="uv-integrante-body">
+                  <Field label="Nota">
+                    <Input type="number" min="0" max="10" step="0.1" placeholder="—"
+                      value={integrantesAval[i].nota} onChange={updIntegrante(i, "nota")} />
+                  </Field>
+                  <Field label="Observação">
+                    <Input placeholder="Observação sobre este integrante…"
+                      value={integrantesAval[i].obs} onChange={updIntegrante(i, "obs")} />
+                  </Field>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
       </Card>
 
-      {/* Ficha do grupo */}
+      {/* Observações gerais */}
       <Card>
-        <CardHead title="Ficha de Avaliação" />
+        <CardHead title="Observações Gerais" />
         <div className="uv-form-stack">
-          <div className="uv-grid-2 uv-gap-sm">
-            <Field label="Disciplina" error={errors.disciplina}>
-              <Select options={materias} value={f.disciplina} onChange={set("disciplina")}
-                placeholder="Selecione…" error={errors.disciplina} />
-            </Field>
-            <Field label="Nota final (0–10)" error={errors.nota}>
-              <Input type="number" min="0" max="10" step="0.1" placeholder="0.0"
-                value={f.nota} onChange={set("nota")} error={errors.nota} />
-            </Field>
-          </div>
-
           <Field label="Observações do Professor">
             <Textarea rows="3" placeholder="Observações gerais sobre o desempenho do grupo…"
               value={f.anotacoes} onChange={set("anotacoes")} />

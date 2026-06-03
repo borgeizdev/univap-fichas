@@ -20,7 +20,7 @@ function HistoricoAvaliacoes({ user }) {
   ).sort((a, b) => b.data.localeCompare(a.data));
 
   if (detalhe) {
-    return <DetalheAvaliacao aval={detalhe} onVoltar={() => setDetalhe(null)} />;
+    return <DetalheAvaliacao aval={detalhe} user={user} onVoltar={() => setDetalhe(null)} />;
   }
 
   return (
@@ -58,7 +58,7 @@ function HistoricoAvaliacoes({ user }) {
       ) : (
         <div className="uv-hist-list">
           {filtered.map(a => (
-            <HistCard key={a.id} aval={a} onClick={() => setDetalhe(a)} />
+            <HistCard key={a.id} aval={a} userName={user.nome} onClick={() => setDetalhe(a)} />
           ))}
         </div>
       )}
@@ -66,12 +66,13 @@ function HistoricoAvaliacoes({ user }) {
   );
 }
 
-function HistCard({ aval, onClick }) {
-  const tone = notaTone(aval.nota);
+function HistCard({ aval, userName, onClick }) {
+  const minhaAval = aval.integrantesAval?.find(x => x.nome === userName);
+  const nota = minhaAval?.nota ?? aval.nota;
   return (
     <button className="uv-hist-card" onClick={onClick} type="button">
       <div className="uv-hist-nota">
-        <NotaBadge nota={aval.nota} big />
+        {nota != null ? <NotaBadge nota={nota} big /> : <span className="uv-nota uv-nota-slate" style={{ fontSize: 20, padding: "6px 14px" }}>—</span>}
       </div>
       <div className="uv-hist-info">
         <span className="uv-hist-disc">{aval.disciplina}</span>
@@ -90,7 +91,9 @@ function HistCard({ aval, onClick }) {
   );
 }
 
-function DetalheAvaliacao({ aval, onVoltar }) {
+function DetalheAvaliacao({ aval, user, onVoltar }) {
+  const minhaAval = aval.integrantesAval?.find(x => x.nome === user.nome);
+
   return (
     <>
       <PageHeading
@@ -100,12 +103,14 @@ function DetalheAvaliacao({ aval, onVoltar }) {
       />
 
       <div className="uv-det-nota-wrap">
-        <div className="uv-det-nota-box">
-          <span className="uv-det-nota-label">Nota Final</span>
-          <span className={`uv-det-nota-val uv-nota-${notaTone(aval.nota)}`}>
-            {aval.nota.toFixed(1)}
-          </span>
-        </div>
+        {minhaAval?.nota != null && (
+          <div className="uv-det-nota-box">
+            <span className="uv-det-nota-label">Sua Nota</span>
+            <span className={`uv-det-nota-val uv-nota-${notaTone(minhaAval.nota)}`}>
+              {minhaAval.nota.toFixed(1)}
+            </span>
+          </div>
+        )}
         <StatusBadge status={aval.status} />
       </div>
 
@@ -118,25 +123,10 @@ function DetalheAvaliacao({ aval, onVoltar }) {
         </div>
       </Card>
 
-      {aval.integrantesAval?.length > 0 && (
+      {minhaAval?.obs && (
         <Card className="uv-mb-card">
-          <CardHead title="Avaliação Individual" />
-          <ol className="uv-integrantes" style={{ padding: "6px 4px 2px" }}>
-            {aval.integrantesAval.map((x, i) => (
-              <li key={x.matricula} className="uv-integrante">
-
-                <Avatar nome={x.nome} size={32} idx={i} />
-                <div className="uv-integrante-info">
-                  <span className="uv-integrante-nome">{x.nome}</span>
-                  <span className="uv-integrante-mat">Matrícula {x.matricula}</span>
-                  {x.obs && <span className="uv-integrante-obs">{x.obs}</span>}
-                </div>
-                {x.nota != null && (
-                  <div className="uv-integrante-nota-right"><NotaBadge nota={x.nota} /></div>
-                )}
-              </li>
-            ))}
-          </ol>
+          <CardHead title="Observação Individual" />
+          <p className="uv-det-texto">{minhaAval.obs}</p>
         </Card>
       )}
 
