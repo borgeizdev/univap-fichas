@@ -1,9 +1,11 @@
 /* Univap Fichas — Cadastro de Professores (Coordenador) */
 
 function ProfessorForm({ form, onChange, disciplinas, selecionadas, onToggleMat, onSubmit, submitLabel, onCancelar, showDisclaimer }) {
+  const senhasOk = !form.confirmarSenha || form.senha === form.confirmarSenha;
+
   return (
     <div className="uv-form-stack">
-      <div className="uv-grid-3 uv-gap-sm">
+      <div className="uv-grid-2 uv-gap-sm">
         <Field label="Nome completo">
           <Input placeholder="Ex: Prof. João Silva" value={form.nome} onChange={onChange("nome")} />
         </Field>
@@ -12,6 +14,18 @@ function ProfessorForm({ form, onChange, disciplinas, selecionadas, onToggleMat,
         </Field>
         <Field label="Senha">
           <Input type="password" placeholder="Senha de acesso" value={form.senha} onChange={onChange("senha")} />
+        </Field>
+        <Field
+          label="Confirmar Senha"
+          error={!senhasOk ? "Senhas não coincidem" : undefined}
+        >
+          <Input
+            type="password"
+            placeholder="Repita a senha"
+            value={form.confirmarSenha}
+            onChange={onChange("confirmarSenha")}
+            error={!senhasOk}
+          />
         </Field>
       </div>
 
@@ -43,14 +57,16 @@ function ProfessorForm({ form, onChange, disciplinas, selecionadas, onToggleMat,
   );
 }
 
+const FORM_VAZIO = { nome: "", email: "", senha: "", confirmarSenha: "" };
+
 function CadastroProfessores() {
   const toast = useToast();
-  const [profs, setProfs]      = useState(loadProfessores);
-  const [form, setForm]        = useState({ nome: "", email: "", senha: "" });
-  const [selecionadas, setSel] = useState([]);
-  const [editIdx, setEditIdx]  = useState(null);
-  const [editForm, setEditForm] = useState({ nome: "", email: "", senha: "" });
-  const [editSel, setEditSel]  = useState([]);
+  const [profs, setProfs]       = useState(loadProfessores);
+  const [form, setForm]         = useState(FORM_VAZIO);
+  const [selecionadas, setSel]  = useState([]);
+  const [editIdx, setEditIdx]   = useState(null);
+  const [editForm, setEditForm] = useState(FORM_VAZIO);
+  const [editSel, setEditSel]   = useState([]);
   const disciplinas = loadDisciplinas();
 
   const set   = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
@@ -65,6 +81,9 @@ function CadastroProfessores() {
     if (!form.nome.trim() || !form.email.trim() || !form.senha.trim()) {
       toast("Preencha nome, e-mail e senha.", "warn"); return;
     }
+    if (form.senha !== form.confirmarSenha) {
+      toast("As senhas não coincidem.", "warn"); return;
+    }
     if (profs.some(p => p.email === form.email.trim())) {
       toast("Já existe um professor com este e-mail.", "warn"); return;
     }
@@ -75,7 +94,7 @@ function CadastroProfessores() {
       senha: form.senha.trim(),
       materias: selecionadas,
     }]);
-    setForm({ nome: "", email: "", senha: "" });
+    setForm(FORM_VAZIO);
     setSel([]);
     toast("Professor cadastrado com sucesso!", "success");
   };
@@ -83,13 +102,16 @@ function CadastroProfessores() {
   const iniciarEdicao = (i) => {
     const p = profs[i];
     setEditIdx(i);
-    setEditForm({ nome: p.nome, email: p.email, senha: p.senha });
+    setEditForm({ nome: p.nome, email: p.email, senha: p.senha, confirmarSenha: "" });
     setEditSel(p.materias || []);
   };
 
   const salvarEdicao = () => {
     if (!editForm.nome.trim() || !editForm.email.trim() || !editForm.senha.trim()) {
       toast("Preencha nome, e-mail e senha.", "warn"); return;
+    }
+    if (editForm.senha !== editForm.confirmarSenha) {
+      toast("As senhas não coincidem.", "warn"); return;
     }
     if (profs.some((p, i) => i !== editIdx && p.email === editForm.email.trim())) {
       toast("Já existe um professor com este e-mail.", "warn"); return;
