@@ -4,7 +4,7 @@ const USERS = {
   "gui@univap.com":   { senha: "123aluno", role: "aluno",       nome: "Guilherme Souza" },
 };
 
-function Login({ onLogin }) {
+function Login({ onLogin, dark, onToggleTheme }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
@@ -29,8 +29,11 @@ function Login({ onLogin }) {
   return (
     <div className="uv-login">
       <form className="uv-login-card uv-anim-up" onSubmit={submit}>
+        <button type="button" className="uv-login-theme-btn" onClick={onToggleTheme} title={dark ? "Tema claro" : "Tema escuro"}>
+          <Icon name={dark ? "sun" : "moon"} size={16} />
+        </button>
         <div className="uv-login-brand">
-          <img src="assets/images/univap-login.png" alt="UniVap" className="uv-login-logo" />
+          <img src={dark ? "assets/images/univap-sidebar.png" : "assets/images/univap-login.png"} alt="UniVap" className="uv-login-logo" />
           <p className="uv-login-sub">Sistema de Avaliação Acadêmica</p>
         </div>
 

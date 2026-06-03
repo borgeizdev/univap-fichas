@@ -73,7 +73,7 @@ function App() {
   );
 
   if (!auth) {
-    return (<><Login onLogin={login} />{panel}</>);
+    return (<><Login onLogin={login} dark={dark} onToggleTheme={() => setDark(d => !d)} />{panel}</>);
   }
 
   const renderScreen = () => {

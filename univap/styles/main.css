@@ -211,10 +211,18 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 }
 [data-theme="dark"] .uv-login { background: linear-gradient(160deg, #0e1118 0%, #131a2b 60%, #0c1830 100%); }
 .uv-login-card {
+  position: relative;
   width: 100%; max-width: 410px; background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--uv-card-radius); box-shadow: var(--shadow-lg); padding: 40px 36px;
   display: flex; flex-direction: column; gap: 18px;
 }
+.uv-login-theme-btn {
+  position: absolute; top: 14px; right: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; background: transparent; border: none;
+  color: var(--text-3); cursor: pointer; border-radius: 8px; transition: background .15s, color .15s;
+}
+.uv-login-theme-btn:hover { background: var(--hover); color: var(--text-1); }
 .uv-login-brand { text-align: center; margin-bottom: 6px; }
 .uv-login-logo { width: 200px; height: auto; display: block; margin: 0 auto 8px; }
 .uv-login-sub { font-size: 13.5px; color: var(--text-3); margin-top: 3px; }
