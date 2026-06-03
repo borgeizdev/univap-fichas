@@ -39,7 +39,7 @@ function Login({ onLogin }) {
             value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
         </Field>
         <Field label="Senha">
-          <Input type="password" placeholder="••••••••" value={senha}
+          <PasswordInput placeholder="••••••••" value={senha}
             onChange={(e) => setSenha(e.target.value)} autoComplete="current-password" />
         </Field>
 

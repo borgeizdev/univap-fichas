@@ -142,6 +142,9 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .uv-input-wrap { position: relative; }
 .uv-input-wrap.has-icon .uv-input { padding-left: 40px; }
 .uv-input-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+.uv-input-wrap.has-eye .uv-input { padding-right: 40px; }
+.uv-input-eye { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-3); cursor: pointer; display: grid; place-items: center; padding: 4px; border-radius: 6px; transition: color .15s; }
+.uv-input-eye:hover { color: var(--text); }
 
 .uv-select-wrap { position: relative; }
 .uv-select { appearance: none; padding-right: 36px; cursor: pointer; }

@@ -13,14 +13,13 @@ function ProfessorForm({ form, onChange, disciplinas, selecionadas, onToggleMat,
           <Input type="email" placeholder="joao@univap.com" value={form.email} onChange={onChange("email")} />
         </Field>
         <Field label="Senha">
-          <Input type="password" placeholder="Senha de acesso" value={form.senha} onChange={onChange("senha")} />
+          <PasswordInput placeholder="Senha de acesso" value={form.senha} onChange={onChange("senha")} />
         </Field>
         <Field
           label="Confirmar Senha"
           error={!senhasOk ? "Senhas não coincidem" : undefined}
         >
-          <Input
-            type="password"
+          <PasswordInput
             placeholder="Repita a senha"
             value={form.confirmarSenha}
             onChange={onChange("confirmarSenha")}

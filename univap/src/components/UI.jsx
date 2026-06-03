@@ -78,6 +78,18 @@ function Input({ icon, error, className = "", ...rest }) {
     </div>
   );
 }
+function PasswordInput({ error, className = "", ...rest }) {
+  const [show, setShow] = React.useState(false);
+  return (
+    <div className={`uv-input-wrap has-eye ${error ? "is-error" : ""}`}>
+      <input className={`uv-input ${className}`} type={show ? "text" : "password"} {...rest} />
+      <button type="button" className="uv-input-eye" tabIndex={-1}
+        onClick={() => setShow(s => !s)} aria-label={show ? "Ocultar senha" : "Mostrar senha"}>
+        <Icon name={show ? "eyeOff" : "eye"} size={16} />
+      </button>
+    </div>
+  );
+}
 function Textarea({ error, className = "", ...rest }) {
   return <textarea className={`uv-input uv-textarea ${error ? "is-error" : ""} ${className}`} {...rest} />;
 }
@@ -203,6 +215,6 @@ function LineChart({ data, height = 200, valueKey = "media", labelKey = "turma",
 
 Object.assign(window, {
   Button, Card, CardHead, Badge, StatusBadge, NotaBadge, notaTone,
-  Field, Input, Textarea, Select, Avatar, AvatarStack, avInitials,
+  Field, Input, PasswordInput, Textarea, Select, Avatar, AvatarStack, avInitials,
   ToastProvider, useToast, BarChart, LineChart, STATUS_TONE,
 });
