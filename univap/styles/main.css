@@ -209,7 +209,8 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
   gap: 26px; padding: 32px 20px;
   background: #d4d4d4;
 }
-[data-theme="dark"] .uv-login { background: linear-gradient(160deg, #0e1118 0%, #131a2b 60%, #0c1830 100%); }
+[data-theme="dark"] .uv-login { background: var(--bg); }
+[data-theme="dark"] .uv-login-card { box-shadow: none; }
 .uv-login-card {
   position: relative;
   width: 100%; max-width: 410px; background: var(--surface); border: 1px solid var(--border);
