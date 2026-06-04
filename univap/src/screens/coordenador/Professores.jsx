@@ -66,7 +66,7 @@ function CadastroProfessores() {
   const [editIdx, setEditIdx]   = useState(null);
   const [editForm, setEditForm] = useState(FORM_VAZIO);
   const [editSel, setEditSel]   = useState([]);
-  const disciplinas = loadDisciplinas();
+  const disciplinas = loadDisciplinas().map(d => d.nome);
 
   const set   = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   const setEd = (k) => (e) => setEditForm(f => ({ ...f, [k]: e.target.value }));

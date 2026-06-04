@@ -106,9 +106,15 @@ function gerarNomeGrupo(ano, turma, grupos) {
 function CriarGrupoForm({ user, grupos, onSalvar, onCancelar }) {
   const toast = useToast();
   const [f, setF] = useState({ curso: "", ano: "", turma: "", materia: "" });
+
+  const setCurso = (curso) => setF(s => ({ ...s, curso, turma: "", materia: "" }));
   const set = (k) => (val) => setF(s => ({ ...s, [k]: val.target ? val.target.value : val }));
 
-  const disciplinas = loadDisciplinas();
+  const todasDisc    = loadDisciplinas();
+  const turmasFiltradas = f.curso ? (MOCK.turmasPorCurso[f.curso] || MOCK.turmas) : [];
+  const discFiltradas   = f.curso
+    ? todasDisc.filter(d => d.curso === f.curso).map(d => d.nome)
+    : [];
 
   const salvar = () => {
     if (!f.curso || !f.ano || !f.turma) {
@@ -136,23 +142,34 @@ function CriarGrupoForm({ user, grupos, onSalvar, onCancelar }) {
         <div className="uv-form-stack">
           <div className="uv-grid-3 uv-gap-sm">
             <Field label="Curso">
-              <Select options={MOCK.cursos} value={f.curso} onChange={set("curso")} placeholder="Selecione…" />
+              <Select options={MOCK.cursos} value={f.curso} onChange={setCurso} placeholder="Selecione…" />
             </Field>
             <Field label="Ano">
               <Select options={MOCK.anos} value={f.ano} onChange={set("ano")} placeholder="Selecione…" />
             </Field>
             <Field label="Turma">
-              <Select options={MOCK.turmas} value={f.turma} onChange={set("turma")} placeholder="Selecione…" />
+              <Select
+                options={turmasFiltradas}
+                value={f.turma}
+                onChange={set("turma")}
+                placeholder={f.curso ? "Selecione…" : "Selecione o curso primeiro…"}
+                disabled={!f.curso}
+              />
             </Field>
           </div>
-          {disciplinas.length > 0 ? (
+          {!f.curso ? (
+            <div className="uv-materia-aviso">
+              <Icon name="clipboardList" size={15} />
+              Selecione o curso para ver as matérias disponíveis.
+            </div>
+          ) : discFiltradas.length > 0 ? (
             <Field label="Matéria">
-              <Select options={disciplinas} value={f.materia} onChange={set("materia")} placeholder="Selecione a matéria…" />
+              <Select options={discFiltradas} value={f.materia} onChange={set("materia")} placeholder="Selecione a matéria…" />
             </Field>
           ) : (
             <div className="uv-materia-aviso">
               <Icon name="clipboardList" size={15} />
-              Nenhuma matéria disponível. Aguarde o coordenador técnico cadastrá-las.
+              Nenhuma matéria cadastrada para {f.curso}. Aguarde o coordenador técnico.
             </div>
           )}
           <div className="uv-form-actions">

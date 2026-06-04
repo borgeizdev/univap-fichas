@@ -54,7 +54,7 @@ function GrupoAvalCard({ grupo, onSelecionar }) {
 
 function FormAvaliacao({ grupo, user, onVoltar }) {
   const toast = useToast();
-  const materias = getProfMaterias(user.email) || loadDisciplinas();
+  const materias = getProfMaterias(user.email) || loadDisciplinas().map(d => d.nome);
   const [f, setF] = useState({
     disciplina: grupo.materia || "",
     anotacoes: "", positivos: "", melhorar: "",

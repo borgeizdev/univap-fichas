@@ -4,32 +4,40 @@ function CadastroMaterias() {
   const toast = useToast();
   const [materias, setMaterias] = useState(loadDisciplinas);
   const [nome, setNome]         = useState("");
+  const [curso, setCurso]       = useState("");
   const [editIdx, setEditIdx]   = useState(null);
   const [editNome, setEditNome] = useState("");
+  const [editCurso, setEditCurso] = useState("");
 
   const salvar = (ms) => { setMaterias(ms); saveDisciplinas(ms); };
 
   const adicionar = () => {
     const n = nome.trim();
-    if (!n) { toast("Informe o nome da matéria.", "warn"); return; }
-    if (materias.includes(n)) { toast("Matéria já cadastrada.", "warn"); return; }
-    salvar([...materias, n]);
+    if (!n)     { toast("Informe o nome da matéria.", "warn"); return; }
+    if (!curso) { toast("Selecione o curso da matéria.", "warn"); return; }
+    if (materias.some(m => m.nome === n && m.curso === curso)) {
+      toast("Matéria já cadastrada para este curso.", "warn"); return;
+    }
+    salvar([...materias, { nome: n, curso }]);
     setNome("");
+    setCurso("");
     toast("Matéria cadastrada com sucesso!", "success");
   };
 
   const iniciarEdicao = (i) => {
     setEditIdx(i === editIdx ? null : i);
-    setEditNome(materias[i]);
+    setEditNome(materias[i].nome);
+    setEditCurso(materias[i].curso);
   };
 
   const salvarEdicao = () => {
     const n = editNome.trim();
-    if (!n) { toast("Informe o nome da matéria.", "warn"); return; }
-    if (materias.some((m, i) => i !== editIdx && m === n)) {
-      toast("Matéria já cadastrada.", "warn"); return;
+    if (!n)       { toast("Informe o nome da matéria.", "warn"); return; }
+    if (!editCurso) { toast("Selecione o curso.", "warn"); return; }
+    if (materias.some((m, i) => i !== editIdx && m.nome === n && m.curso === editCurso)) {
+      toast("Matéria já cadastrada para este curso.", "warn"); return;
     }
-    salvar(materias.map((m, i) => (i === editIdx ? n : m)));
+    salvar(materias.map((m, i) => i === editIdx ? { nome: n, curso: editCurso } : m));
     setEditIdx(null);
     toast("Matéria atualizada com sucesso!", "success");
   };
@@ -63,6 +71,14 @@ function CadastroMaterias() {
                 onKeyDown={onKey}
               />
             </Field>
+            <Field label="Curso">
+              <Select
+                options={MOCK.cursos}
+                value={curso}
+                onChange={(v) => setCurso(v)}
+                placeholder="Selecione o curso…"
+              />
+            </Field>
             <div className="uv-form-actions">
               <Button icon="plus" onClick={adicionar}>Adicionar</Button>
             </div>
@@ -88,15 +104,22 @@ function CadastroMaterias() {
                   <tr>
                     <th>#</th>
                     <th>Nome da Matéria</th>
+                    <th>Curso</th>
                     <th className="ta-r"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {materias.map((m, i) => (
-                    <React.Fragment key={m}>
+                    <React.Fragment key={`${m.nome}-${m.curso}-${i}`}>
                       <tr className={editIdx === i ? "uv-tr-editing" : ""}>
                         <td className="uv-td-muted" style={{ width: 48 }}>{i + 1}</td>
-                        <td>{m}</td>
+                        <td>{m.nome}</td>
+                        <td>
+                          {m.curso
+                            ? <span className="uv-chip">{m.curso}</span>
+                            : <span className="uv-td-muted">—</span>
+                          }
+                        </td>
                         <td className="ta-r">
                           <div className="uv-actions-cell">
                             <button className="uv-icon-btn sm" title="Editar" onClick={() => iniciarEdicao(i)}>
@@ -110,16 +133,26 @@ function CadastroMaterias() {
                       </tr>
                       {editIdx === i && (
                         <tr className="uv-tr-edit-form">
-                          <td colSpan={3}>
+                          <td colSpan={4}>
                             <div className="uv-inline-edit">
-                              <Field label="Nome da Matéria">
-                                <Input
-                                  value={editNome}
-                                  onChange={(e) => setEditNome(e.target.value)}
-                                  onKeyDown={onKeyEd}
-                                  autoFocus
-                                />
-                              </Field>
+                              <div className="uv-grid-2 uv-gap-sm">
+                                <Field label="Nome da Matéria">
+                                  <Input
+                                    value={editNome}
+                                    onChange={(e) => setEditNome(e.target.value)}
+                                    onKeyDown={onKeyEd}
+                                    autoFocus
+                                  />
+                                </Field>
+                                <Field label="Curso">
+                                  <Select
+                                    options={MOCK.cursos}
+                                    value={editCurso}
+                                    onChange={(v) => setEditCurso(v)}
+                                    placeholder="Selecione…"
+                                  />
+                                </Field>
+                              </div>
                               <div className="uv-form-actions">
                                 <Button icon="check" onClick={salvarEdicao}>Salvar</Button>
                                 <Button variant="ghost" icon="x" onClick={() => setEditIdx(null)}>Cancelar</Button>

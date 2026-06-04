@@ -7,7 +7,12 @@ const LS_PROFESSORES = "univap_professores_v1";
 function loadGrupos()       { try { return JSON.parse(localStorage.getItem(LS_GRUPOS))      || []; } catch { return []; } }
 function saveGrupos(v)      { try { localStorage.setItem(LS_GRUPOS, JSON.stringify(v));      } catch {} }
 
-function loadDisciplinas()  { try { return JSON.parse(localStorage.getItem(LS_DISC))        || []; } catch { return []; } }
+function loadDisciplinas()  {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LS_DISC)) || [];
+    return raw.map(d => typeof d === "string" ? { nome: d, curso: "" } : d);
+  } catch { return []; }
+}
 function saveDisciplinas(v) { try { localStorage.setItem(LS_DISC, JSON.stringify(v));        } catch {} }
 
 function loadAvaliacoes()   { try { return JSON.parse(localStorage.getItem(LS_AVALIACOES))  || []; } catch { return []; } }
