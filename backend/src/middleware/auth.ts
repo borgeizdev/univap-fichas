@@ -1,8 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-troque-em-producao';
-export const JWT_EXPIRES = '7d';
+const JWT_SECRET: string = (() => {
+  const s = process.env.JWT_SECRET;
+  if (!s) throw new Error('Variável de ambiente JWT_SECRET não definida.');
+  return s;
+})();
+export const JWT_EXPIRES = '1d';
 
 export interface JWTPayload {
   id:    number;
@@ -30,7 +34,7 @@ export function verifyToken(req: Request, res: Response, next: NextFunction): vo
     return;
   }
   try {
-    req.user = jwt.verify(auth.slice(7), JWT_SECRET) as JWTPayload;
+    req.user = jwt.verify(auth.slice(7), JWT_SECRET) as unknown as JWTPayload;
     next();
   } catch {
     res.status(401).json({ error: 'Token inválido ou expirado.' });

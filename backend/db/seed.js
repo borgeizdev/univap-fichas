@@ -12,8 +12,14 @@ const pool = new Pool({
 });
 
 async function seed() {
-  const coordHash = await bcrypt.hash('123coord', 10);
-  const alunoHash = await bcrypt.hash('123aluno', 10);
+  const coordSenha = process.env.SEED_COORD_PASS;
+  const alunoSenha = process.env.SEED_ALUNO_PASS;
+  if (!coordSenha || !alunoSenha) {
+    throw new Error('Defina SEED_COORD_PASS e SEED_ALUNO_PASS no .env antes de rodar o seed.');
+  }
+
+  const coordHash = await bcrypt.hash(coordSenha, 10);
+  const alunoHash = await bcrypt.hash(alunoSenha, 10);
 
   await pool.query(`
     INSERT INTO usuarios (email, senha, nome, role) VALUES

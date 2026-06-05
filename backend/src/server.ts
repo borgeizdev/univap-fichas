@@ -24,7 +24,7 @@ const pool = new Pool({
   port:     parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME     || 'univap_fichas',
   user:     process.env.DB_USER     || 'postgres',
-  password: process.env.DB_PASS     || 'Mateus2009#',
+  password: process.env.DB_PASS     || '',
 });
 
 /* ── Types ───────────────────────────────────────────────────────────────── */

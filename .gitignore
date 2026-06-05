@@ -1,4 +1,16 @@
 .agents/
 skills-lock.json
+
+# Backend
 backend/node_modules/
 backend/.env
+backend/dist/
+
+# Frontend (caso venha a ter build)
+univap/node_modules/
+univap/dist/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
