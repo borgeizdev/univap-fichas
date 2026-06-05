@@ -6,37 +6,65 @@ Sistema de avaliação acadêmica desenvolvido como projeto escolar para o Colé
 
 ## Tecnologias
 
+**Frontend**
 - **React 18** (via CDN — sem bundler/build tool)
 - **Babel Standalone** — transpila JSX diretamente no browser
-- **LocalStorage** — persistência de dados no cliente
 - **CSS puro** — estilização sem frameworks externos
 - **Google Fonts** — Roboto, Figtree, Manrope, Plus Jakarta Sans
 
-> Não precisa de Node.js, npm ou qualquer instalação. Basta abrir o `index.html` no browser.
+**Backend**
+- **Node.js + Express** — API REST
+- **PostgreSQL** — banco de dados relacional
+- **bcrypt** — hash de senhas
+- **pg** — driver PostgreSQL para Node.js
 
 ---
 
 ## Como rodar
 
-1. Clone ou baixe o repositório
-2. Abra o arquivo `univap/index.html` diretamente no navegador
+### 1. Banco de dados
 
-```
-Projeto Escola/
-└── univap/
-    └── index.html   ← abra este arquivo
+Crie o banco e rode o schema:
+
+```bash
+psql -U postgres -c "CREATE DATABASE univap_fichas;"
+psql -U postgres -d univap_fichas -f backend/db/schema.sql
 ```
 
-> **Dica:** Use a extensão **Live Server** no VS Code para evitar problemas com CORS ao carregar os arquivos `.jsx` via script.
+### 2. Backend
+
+```bash
+cd backend
+npm install
+node db/seed.js   # cria os usuários padrão (só na primeira vez)
+node server.js    # inicia a API em http://localhost:3001
+```
+
+Configure as variáveis de ambiente em `backend/.env` (baseie-se em `.env.example`):
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=univap_fichas
+DB_USER=postgres
+DB_PASS="sua_senha"
+PORT=3001
+```
+
+### 3. Frontend
+
+Com o servidor rodando, abra `univap/index.html` no navegador.
+
+> **Dica:** Use a extensão **Live Server** no VS Code para evitar problemas com CORS ao carregar os arquivos `.jsx`.
 
 ---
 
 ## Contas de acesso
 
-| Perfil       | E-mail                 | Senha       |
-|--------------|------------------------|-------------|
-| Coordenador  | coord@univap.com       | 123coord    |
-| Aluno        | gui@univap.com         | 123aluno    |
+| Perfil       | E-mail                  | Senha                |
+|--------------|-------------------------|----------------------|
+| Coordenador  | coord@univap.com        | 123coord             |
+| Aluno        | gui@univap.com          | 123aluno             |
 | Professor    | criado pelo coordenador | definida no cadastro |
 
 ---
@@ -46,7 +74,6 @@ Projeto Escola/
 ### Coordenador
 - Cadastrar e gerenciar **matérias**
 - Cadastrar e gerenciar **professores**, atribuindo matérias a cada um
-- Professores criados recebem e-mail e senha definidos no momento do cadastro
 
 ### Aluno
 - Criar e gerenciar **grupos** (com nome, curso, ano, turma e matéria)
@@ -64,36 +91,45 @@ Projeto Escola/
 ## Estrutura de pastas
 
 ```
-univap/
-├── index.html                        # Entry point — carrega todos os scripts em ordem
-├── assets/
-│   └── images/                       # Imagens do projeto
-├── styles/
-│   └── main.css                      # Estilos globais
-└── src/
-    ├── App.jsx                       # Raiz da aplicação — autenticação e roteamento
-    ├── components/
-    │   ├── Icon.jsx                  # Ícones SVG
-    │   ├── UI.jsx                    # Componentes reutilizáveis (Button, Card, Badge, Input…)
-    │   ├── Layout.jsx                # AppShell, Sidebar e Header
-    │   └── TweaksPanel.jsx           # Painel de personalização visual
-    ├── data/
-    │   ├── mock.js                   # Enums: cursos, anos, turmas, bimestres
-    │   └── store.js                  # Funções de leitura/escrita no LocalStorage
-    └── screens/
-        ├── Login.jsx                 # Tela de login
-        ├── Misc.jsx                  # Modal de visualização de ficha, ComingSoon
-        ├── professor/
-        │   ├── Inicio.jsx            # Home do professor
-        │   ├── NovaAvaliacao.jsx     # Formulário de nova avaliação
-        │   ├── GerenciarFichas.jsx   # Tabela de fichas com filtros
-        │   └── Dashboard.jsx         # Dashboard com gráficos
-        ├── aluno/
-        │   ├── MeuGrupo.jsx          # Criação e gerenciamento de grupos
-        │   └── HistoricoAvaliacoes.jsx # Histórico de avaliações do aluno
-        └── coordenador/
-            ├── Materias.jsx          # CRUD de matérias
-            └── Professores.jsx       # CRUD de professores
+univap-fichas/
+├── backend/
+│   ├── server.js                     # API REST (Express)
+│   ├── .env.example                  # Modelo de configuração
+│   ├── package.json
+│   └── db/
+│       ├── schema.sql                # Criação das tabelas
+│       └── seed.js                   # Usuários iniciais
+└── univap/
+    ├── index.html                    # Entry point — carrega todos os scripts em ordem
+    ├── assets/
+    │   └── images/
+    ├── styles/
+    │   └── main.css                  # Estilos globais
+    └── src/
+        ├── App.jsx                   # Raiz da aplicação — autenticação e roteamento
+        ├── components/
+        │   ├── Icon.jsx
+        │   ├── UI.jsx                # Componentes reutilizáveis (Button, Card, Badge…)
+        │   ├── Layout.jsx            # AppShell, Sidebar e Header
+        │   └── TweaksPanel.jsx       # Painel de personalização visual
+        ├── data/
+        │   ├── mock.js               # Enums: cursos, anos, turmas, bimestres
+        │   ├── store.js              # Utilitários compartilhados (fmtDataBR)
+        │   └── api.js                # Cliente de API (fetch para o backend)
+        └── screens/
+            ├── Login.jsx
+            ├── Misc.jsx
+            ├── professor/
+            │   ├── Inicio.jsx
+            │   ├── NovaAvaliacao.jsx
+            │   ├── GerenciarFichas.jsx
+            │   └── Dashboard.jsx
+            ├── aluno/
+            │   ├── MeuGrupo.jsx
+            │   └── HistoricoAvaliacoes.jsx
+            └── coordenador/
+                ├── Materias.jsx
+                └── Professores.jsx
 ```
 
 ---
@@ -116,14 +152,11 @@ univap/
 
 ## Personalização visual
 
-O professor pode customizar a aparência do sistema pelo painel de tweaks:
+Qualquer usuário pode customizar a aparência pelo painel de tweaks:
 
-- **Tema da sidebar**: Solid, Deep, Gradient ou Light
-- **Cor de destaque**: escolha livre
+- **Cor de destaque**
 - **Fonte da interface**: Roboto, Figtree, Manrope ou Plus Jakarta Sans
-- **Arredondamento dos cards**: de quadrado a arredondado
-
-As preferências são salvas automaticamente no LocalStorage.
+- **Arredondamento dos cards**
 
 ---
 
