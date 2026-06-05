@@ -1,8 +1,18 @@
 import 'dotenv/config';
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import { Pool, PoolClient } from 'pg';
+import {
+  validate,
+  LoginSchema,
+  GrupoCreateSchema,
+  GrupoUpdateSchema,
+  DisciplinaSchema,
+  AvaliacaoCreateSchema,
+  ProfessorCreateSchema,
+  ProfessorUpdateSchema,
+} from './schemas';
 
 const app = express();
 app.use(cors());
@@ -34,36 +44,23 @@ interface GrupoRow {
   turma:         string;
   materia:       string | null;
   criador_email: string;
-  integrantes:   IntegranteItem[];
-}
-
-interface IntegranteItem {
-  nome:      string;
-  matricula: string;
-  lider:     boolean;
+  integrantes:   { nome: string; matricula: string; lider: boolean }[];
 }
 
 interface AvaliacaoRow {
-  id:              string;
-  grupo_nome:      string;
-  criador_email:   string | null;
-  professor_email: string;
-  professor_nome:  string;
-  disciplina:      string;
-  nota:            string | null;
-  anotacoes:       string;
-  positivos:       string;
-  melhorar:        string;
-  data:            Date | string;
-  status:          string;
-  integrantes_aval: IntegranteAvalItem[];
-}
-
-interface IntegranteAvalItem {
-  nome:      string;
-  matricula: string;
-  nota:      string | null;
-  obs:       string;
+  id:               string;
+  grupo_nome:       string;
+  criador_email:    string | null;
+  professor_email:  string;
+  professor_nome:   string;
+  disciplina:       string;
+  nota:             string | null;
+  anotacoes:        string;
+  positivos:        string;
+  melhorar:         string;
+  data:             Date | string;
+  status:           string;
+  integrantes_aval: { nome: string; matricula: string; nota: string | null; obs: string }[];
 }
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
@@ -75,20 +72,19 @@ const fmtUsuario = (row: UsuarioRow) => ({
   materias: row.materias || [],
 });
 
+type PgError = Error & { code?: string };
+
 /* ── Auth ────────────────────────────────────────────────────────────────── */
 app.post('/api/auth/login', async (req: Request, res: Response) => {
+  const body = validate(LoginSchema, req.body, res);
+  if (!body) return;
   try {
-    const { email, senha } = req.body as { email: unknown; senha: unknown };
-    if (typeof email !== 'string' || typeof senha !== 'string') {
-      return res.status(400).json({ error: 'email e senha são obrigatórios.' });
-    }
     const { rows } = await pool.query<UsuarioRow>(
-      'SELECT * FROM usuarios WHERE email = $1',
-      [email.toLowerCase().trim()]
+      'SELECT * FROM usuarios WHERE email = $1', [body.email]
     );
     if (!rows.length) return res.status(401).json({ error: 'Credenciais inválidas.' });
     const u = rows[0];
-    const ok = await bcrypt.compare(senha, u.senha);
+    const ok = await bcrypt.compare(body.senha, u.senha);
     if (!ok) return res.status(401).json({ error: 'Credenciais inválidas.' });
     res.json(fmtUsuario(u));
   } catch (e) {
@@ -132,26 +128,23 @@ app.get('/api/grupos', async (_req: Request, res: Response) => {
 });
 
 app.post('/api/grupos', async (req: Request, res: Response) => {
+  const body = validate(GrupoCreateSchema, req.body, res);
+  if (!body) return;
   const client: PoolClient = await pool.connect();
   try {
-    const { id, nome, curso, ano, turma, materia, criadorEmail, integrantes = [] } =
-      req.body as {
-        id: string; nome: string; curso: string; ano: string; turma: string;
-        materia?: string; criadorEmail: string; integrantes?: IntegranteItem[];
-      };
     await client.query('BEGIN');
     await client.query(
       'INSERT INTO grupos (id, nome, curso, ano, turma, materia, criador_email) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-      [id, nome, curso, ano, turma, materia || null, criadorEmail]
+      [body.id, body.nome, body.curso, body.ano, body.turma, body.materia ?? null, body.criadorEmail]
     );
-    for (const m of integrantes) {
+    for (const m of body.integrantes) {
       await client.query(
         'INSERT INTO integrantes (grupo_id, nome, matricula, lider) VALUES ($1,$2,$3,$4)',
-        [id, m.nome, m.matricula, !!m.lider]
+        [body.id, m.nome, m.matricula, !!m.lider]
       );
     }
     await client.query('COMMIT');
-    res.status(201).json({ id });
+    res.status(201).json({ id: body.id });
   } catch (e) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: (e as Error).message });
@@ -161,20 +154,17 @@ app.post('/api/grupos', async (req: Request, res: Response) => {
 });
 
 app.put('/api/grupos/:id', async (req: Request, res: Response) => {
+  const body = validate(GrupoUpdateSchema, req.body, res);
+  if (!body) return;
   const client: PoolClient = await pool.connect();
   try {
-    const { nome, curso, ano, turma, materia, integrantes = [] } =
-      req.body as {
-        nome: string; curso: string; ano: string; turma: string;
-        materia?: string; integrantes?: IntegranteItem[];
-      };
     await client.query('BEGIN');
     await client.query(
       'UPDATE grupos SET nome=$1, curso=$2, ano=$3, turma=$4, materia=$5 WHERE id=$6',
-      [nome, curso, ano, turma, materia || null, req.params.id]
+      [body.nome, body.curso, body.ano, body.turma, body.materia ?? null, req.params.id]
     );
     await client.query('DELETE FROM integrantes WHERE grupo_id=$1', [req.params.id]);
-    for (const m of integrantes) {
+    for (const m of body.integrantes) {
       await client.query(
         'INSERT INTO integrantes (grupo_id, nome, matricula, lider) VALUES ($1,$2,$3,$4)',
         [req.params.id, m.nome, m.matricula, !!m.lider]
@@ -210,27 +200,29 @@ app.get('/api/disciplinas', async (_req: Request, res: Response) => {
 });
 
 app.post('/api/disciplinas', async (req: Request, res: Response) => {
+  const body = validate(DisciplinaSchema, req.body, res);
+  if (!body) return;
   try {
-    const { nome, curso } = req.body as { nome: string; curso: string };
     const { rows } = await pool.query(
       'INSERT INTO disciplinas (nome, curso) VALUES ($1,$2) RETURNING *',
-      [nome, curso]
+      [body.nome, body.curso]
     );
     res.status(201).json(rows[0]);
   } catch (e) {
-    const err = e as NodeJS.ErrnoException & { code?: string };
+    const err = e as PgError;
     if (err.code === '23505') return res.status(409).json({ error: 'Matéria já cadastrada para este curso.' });
     res.status(500).json({ error: err.message });
   }
 });
 
 app.put('/api/disciplinas/:id', async (req: Request, res: Response) => {
+  const body = validate(DisciplinaSchema, req.body, res);
+  if (!body) return;
   try {
-    const { nome, curso } = req.body as { nome: string; curso: string };
-    await pool.query('UPDATE disciplinas SET nome=$1, curso=$2 WHERE id=$3', [nome, curso, req.params.id]);
+    await pool.query('UPDATE disciplinas SET nome=$1, curso=$2 WHERE id=$3', [body.nome, body.curso, req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    const err = e as NodeJS.ErrnoException & { code?: string };
+    const err = e as PgError;
     if (err.code === '23505') return res.status(409).json({ error: 'Matéria já cadastrada para este curso.' });
     res.status(500).json({ error: err.message });
   }
@@ -294,35 +286,28 @@ app.get('/api/avaliacoes', async (_req: Request, res: Response) => {
 });
 
 app.post('/api/avaliacoes', async (req: Request, res: Response) => {
+  const body = validate(AvaliacaoCreateSchema, req.body, res);
+  if (!body) return;
   const client: PoolClient = await pool.connect();
   try {
-    const {
-      id, grupoNome, criadorEmail, professorEmail, professorNome,
-      disciplina, nota, anotacoes, positivos, melhorar, integrantesAval = [], data, status,
-    } = req.body as {
-      id: string; grupoNome: string; criadorEmail?: string;
-      professorEmail: string; professorNome: string; disciplina: string;
-      nota?: number | null; anotacoes?: string; positivos?: string; melhorar?: string;
-      integrantesAval?: IntegranteAvalItem[]; data: string; status?: string;
-    };
     await client.query('BEGIN');
     await client.query(
       `INSERT INTO avaliacoes
          (id, grupo_nome, criador_email, professor_email, professor_nome,
           disciplina, nota, anotacoes, positivos, melhorar, data, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-      [id, grupoNome, criadorEmail || null, professorEmail, professorNome,
-       disciplina, nota ?? null, anotacoes || '', positivos || '', melhorar || '',
-       data, status || 'Publicada']
+      [body.id, body.grupoNome, body.criadorEmail ?? null, body.professorEmail, body.professorNome,
+       body.disciplina, body.nota ?? null, body.anotacoes, body.positivos, body.melhorar,
+       body.data, body.status]
     );
-    for (const m of integrantesAval) {
+    for (const m of body.integrantesAval) {
       await client.query(
         'INSERT INTO integrantes_aval (avaliacao_id, nome, matricula, nota, obs) VALUES ($1,$2,$3,$4,$5)',
-        [id, m.nome, m.matricula, m.nota ?? null, m.obs || '']
+        [body.id, m.nome, m.matricula, m.nota ?? null, m.obs]
       );
     }
     await client.query('COMMIT');
-    res.status(201).json({ id });
+    res.status(201).json({ id: body.id });
   } catch (e) {
     await client.query('ROLLBACK');
     res.status(500).json({ error: (e as Error).message });
@@ -344,41 +329,41 @@ app.get('/api/professores', async (_req: Request, res: Response) => {
 });
 
 app.post('/api/professores', async (req: Request, res: Response) => {
+  const body = validate(ProfessorCreateSchema, req.body, res);
+  if (!body) return;
   try {
-    const { nome, email, senha, materias = [] } =
-      req.body as { nome: string; email: string; senha: string; materias?: string[] };
-    const hash = await bcrypt.hash(senha, 10);
+    const hash = await bcrypt.hash(body.senha, 10);
     const { rows } = await pool.query(
       "INSERT INTO usuarios (nome, email, senha, role, materias) VALUES ($1,$2,$3,'professor',$4) RETURNING id",
-      [nome.trim(), email.toLowerCase().trim(), hash, materias]
+      [body.nome, body.email, hash, body.materias]
     );
-    res.status(201).json({ id: rows[0].id, nome: nome.trim(), email: email.toLowerCase().trim(), materias });
+    res.status(201).json({ id: rows[0].id, nome: body.nome, email: body.email, materias: body.materias });
   } catch (e) {
-    const err = e as NodeJS.ErrnoException & { code?: string };
+    const err = e as PgError;
     if (err.code === '23505') return res.status(409).json({ error: 'Já existe um professor com este e-mail.' });
     res.status(500).json({ error: err.message });
   }
 });
 
 app.put('/api/professores/:id', async (req: Request, res: Response) => {
+  const body = validate(ProfessorUpdateSchema, req.body, res);
+  if (!body) return;
   try {
-    const { nome, email, senha, materias = [] } =
-      req.body as { nome: string; email: string; senha?: string; materias?: string[] };
-    if (senha) {
-      const hash = await bcrypt.hash(senha, 10);
+    if (body.senha) {
+      const hash = await bcrypt.hash(body.senha, 10);
       await pool.query(
         'UPDATE usuarios SET nome=$1, email=$2, senha=$3, materias=$4 WHERE id=$5',
-        [nome.trim(), email.toLowerCase().trim(), hash, materias, req.params.id]
+        [body.nome, body.email, hash, body.materias, req.params.id]
       );
     } else {
       await pool.query(
         'UPDATE usuarios SET nome=$1, email=$2, materias=$3 WHERE id=$4',
-        [nome.trim(), email.toLowerCase().trim(), materias, req.params.id]
+        [body.nome, body.email, body.materias, req.params.id]
       );
     }
     res.json({ ok: true });
   } catch (e) {
-    const err = e as NodeJS.ErrnoException & { code?: string };
+    const err = e as PgError;
     if (err.code === '23505') return res.status(409).json({ error: 'Já existe um professor com este e-mail.' });
     res.status(500).json({ error: err.message });
   }
