@@ -60,13 +60,19 @@ const FORM_VAZIO = { nome: "", email: "", senha: "", confirmarSenha: "" };
 
 function CadastroProfessores() {
   const toast = useToast();
-  const [profs, setProfs]       = useState(loadProfessores);
+  const [profs, setProfs]       = useState([]);
+  const [disciplinas, setDiscs] = useState([]);
   const [form, setForm]         = useState(FORM_VAZIO);
   const [selecionadas, setSel]  = useState([]);
-  const [editIdx, setEditIdx]   = useState(null);
+  const [editId, setEditId]     = useState(null);
   const [editForm, setEditForm] = useState(FORM_VAZIO);
   const [editSel, setEditSel]   = useState([]);
-  const disciplinas = loadDisciplinas().map(d => d.nome);
+
+  useEffect(() => {
+    Promise.all([apiGetProfs(), apiGetDiscs()])
+      .then(([ps, ds]) => { setProfs(ps); setDiscs(ds.map(d => d.nome)); })
+      .catch(console.error);
+  }, []);
 
   const set   = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
   const setEd = (k) => (e) => setEditForm(f => ({ ...f, [k]: e.target.value }));
@@ -74,63 +80,72 @@ function CadastroProfessores() {
   const toggleMat     = (m) => setSel(s => s.includes(m) ? s.filter(x => x !== m) : [...s, m]);
   const toggleEditMat = (m) => setEditSel(s => s.includes(m) ? s.filter(x => x !== m) : [...s, m]);
 
-  const salvarProfs = (list) => { setProfs(list); saveProfessores(list); };
-
-  const adicionar = () => {
+  const adicionar = async () => {
     if (!form.nome.trim() || !form.email.trim() || !form.senha.trim()) {
       toast("Preencha nome, e-mail e senha.", "warn"); return;
     }
     if (form.senha !== form.confirmarSenha) {
       toast("As senhas não coincidem.", "warn"); return;
     }
-    if (profs.some(p => p.email === form.email.trim())) {
-      toast("Já existe um professor com este e-mail.", "warn"); return;
+    try {
+      const novo = await apiCreateProf({
+        nome: form.nome.trim(),
+        email: form.email.trim().toLowerCase(),
+        senha: form.senha.trim(),
+        materias: selecionadas,
+      });
+      setProfs(prev => [...prev, novo]);
+      setForm(FORM_VAZIO);
+      setSel([]);
+      toast("Professor cadastrado com sucesso!", "success");
+    } catch (e) {
+      toast(e.message || "Erro ao cadastrar professor.", "error");
     }
-    salvarProfs([...profs, {
-      id: "prof_" + Date.now(),
-      nome: form.nome.trim(),
-      email: form.email.trim().toLowerCase(),
-      senha: form.senha.trim(),
-      materias: selecionadas,
-    }]);
-    setForm(FORM_VAZIO);
-    setSel([]);
-    toast("Professor cadastrado com sucesso!", "success");
   };
 
-  const iniciarEdicao = (i) => {
-    const p = profs[i];
-    setEditIdx(i);
-    setEditForm({ nome: p.nome, email: p.email, senha: p.senha, confirmarSenha: "" });
+  const iniciarEdicao = (p) => {
+    setEditId(editId === p.id ? null : p.id);
+    setEditForm({ nome: p.nome, email: p.email, senha: "", confirmarSenha: "" });
     setEditSel(p.materias || []);
   };
 
-  const salvarEdicao = () => {
-    if (!editForm.nome.trim() || !editForm.email.trim() || !editForm.senha.trim()) {
-      toast("Preencha nome, e-mail e senha.", "warn"); return;
+  const salvarEdicao = async () => {
+    if (!editForm.nome.trim() || !editForm.email.trim()) {
+      toast("Preencha nome e e-mail.", "warn"); return;
     }
-    if (editForm.senha !== editForm.confirmarSenha) {
+    if (editForm.senha && editForm.senha !== editForm.confirmarSenha) {
       toast("As senhas não coincidem.", "warn"); return;
     }
-    if (profs.some((p, i) => i !== editIdx && p.email === editForm.email.trim())) {
-      toast("Já existe um professor com este e-mail.", "warn"); return;
+    try {
+      await apiUpdateProf(editId, {
+        nome: editForm.nome.trim(),
+        email: editForm.email.trim().toLowerCase(),
+        senha: editForm.senha.trim() || undefined,
+        materias: editSel,
+      });
+      setProfs(prev => prev.map(p => p.id === editId
+        ? { ...p, nome: editForm.nome.trim(), email: editForm.email.trim().toLowerCase(), materias: editSel }
+        : p
+      ));
+      setEditId(null);
+      toast("Professor atualizado com sucesso!", "success");
+    } catch (e) {
+      toast(e.message || "Erro ao atualizar professor.", "error");
     }
-    salvarProfs(profs.map((p, i) => i === editIdx ? {
-      ...p,
-      nome: editForm.nome.trim(),
-      email: editForm.email.trim().toLowerCase(),
-      senha: editForm.senha.trim(),
-      materias: editSel,
-    } : p));
-    setEditIdx(null);
-    toast("Professor atualizado com sucesso!", "success");
   };
 
-  const remover = (idx) => {
-    if (editIdx === idx) setEditIdx(null);
-    salvarProfs(profs.filter((_, i) => i !== idx));
-    toast("Professor removido.", "success");
+  const remover = async (id) => {
+    if (editId === id) setEditId(null);
+    try {
+      await apiDeleteProf(id);
+      setProfs(prev => prev.filter(p => p.id !== id));
+      toast("Professor removido.", "success");
+    } catch (e) {
+      toast(e.message || "Erro ao remover professor.", "error");
+    }
   };
+
+  const editProf = profs.find(p => p.id === editId);
 
   return (
     <>
@@ -139,7 +154,6 @@ function CadastroProfessores() {
         sub={`${profs.length} professor${profs.length !== 1 ? "es" : ""} cadastrado${profs.length !== 1 ? "s" : ""}`}
       />
 
-      {/* Formulário de cadastro */}
       <Card style={{ marginBottom: 24 }}>
         <CardHead title="Cadastrar Professor" />
         <ProfessorForm
@@ -150,20 +164,18 @@ function CadastroProfessores() {
         />
       </Card>
 
-      {/* Card de edição */}
-      {editIdx !== null && (
+      {editId !== null && editProf && (
         <Card style={{ marginBottom: 24, borderColor: "var(--uv-primary)" }}>
-          <CardHead title={`Editando: ${profs[editIdx]?.nome}`} />
+          <CardHead title={`Editando: ${editProf.nome}`} />
           <ProfessorForm
             form={editForm} onChange={setEd}
             disciplinas={disciplinas} selecionadas={editSel} onToggleMat={toggleEditMat}
             onSubmit={salvarEdicao} submitLabel="Salvar Alterações"
-            onCancelar={() => setEditIdx(null)}
+            onCancelar={() => setEditId(null)}
           />
         </Card>
       )}
 
-      {/* Lista */}
       <Card>
         <CardHead title="Professores Cadastrados" />
         {profs.length === 0 ? (
@@ -185,7 +197,7 @@ function CadastroProfessores() {
               </thead>
               <tbody>
                 {profs.map((p, i) => (
-                  <tr key={p.id} className={editIdx === i ? "uv-tr-editing" : ""}>
+                  <tr key={p.id} className={editId === p.id ? "uv-tr-editing" : ""}>
                     <td>
                       <div className="uv-td-aluno">
                         <Avatar nome={p.nome} size={30} idx={i} />
@@ -203,10 +215,10 @@ function CadastroProfessores() {
                     </td>
                     <td className="ta-r">
                       <div className="uv-actions-cell">
-                        <button className="uv-icon-btn sm" title="Editar" onClick={() => iniciarEdicao(i)}>
+                        <button className="uv-icon-btn sm" title="Editar" onClick={() => iniciarEdicao(p)}>
                           <Icon name="edit" size={15} />
                         </button>
-                        <button className="uv-icon-btn sm danger" title="Remover" onClick={() => remover(i)}>
+                        <button className="uv-icon-btn sm danger" title="Remover" onClick={() => remover(p.id)}>
                           <Icon name="x" size={16} />
                         </button>
                       </div>

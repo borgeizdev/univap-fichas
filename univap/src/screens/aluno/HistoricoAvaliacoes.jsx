@@ -1,18 +1,22 @@
 /* Univap Fichas — Histórico de Avaliações (Aluno) */
 
 function HistoricoAvaliacoes({ user }) {
+  const [avaliacoes, setAvaliacoes] = useState([]);
   const [q,        setQ]       = useState("");
   const [filtDisc, setFiltDisc] = useState("");
   const [filtProf, setFiltProf] = useState("");
   const [detalhe,  setDetalhe]  = useState(null);
-  const [tick,     setTick]     = useState(0);
 
-  const minhas = loadAvaliacoes().filter(a => a.criadorEmail === user.email);
+  useEffect(() => {
+    apiGetAvals()
+      .then(avals => setAvaliacoes(avals.filter(a => a.criadorEmail === user.email)))
+      .catch(console.error);
+  }, [user.email]);
 
-  const disciplinas = [...new Set(minhas.map(a => a.disciplina))].sort();
-  const professores  = [...new Set(minhas.map(a => a.professorNome))].sort();
+  const disciplinas = [...new Set(avaliacoes.map(a => a.disciplina))].sort();
+  const professores  = [...new Set(avaliacoes.map(a => a.professorNome))].sort();
 
-  const filtered = minhas.filter(a =>
+  const filtered = avaliacoes.filter(a =>
     (!q        || a.disciplina.toLowerCase().includes(q.toLowerCase()) ||
                   a.professorNome.toLowerCase().includes(q.toLowerCase())) &&
     (!filtDisc || a.disciplina === filtDisc) &&
@@ -51,7 +55,7 @@ function HistoricoAvaliacoes({ user }) {
         <EmptyState
           icon="clipboardList"
           title="Nenhuma avaliação encontrada"
-          text={minhas.length === 0
+          text={avaliacoes.length === 0
             ? "Você ainda não recebeu nenhuma avaliação. Crie um grupo e aguarde seu professor publicar."
             : "Tente ajustar os filtros acima."}
         />

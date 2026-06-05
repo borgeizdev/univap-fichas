@@ -1,29 +1,22 @@
 /* Univap Fichas — Login */
-const USERS = {
-  "coord@univap.com": { senha: "123coord", role: "coordenador", nome: "Coord. Técnico" },
-  "gui@univap.com":   { senha: "123aluno", role: "aluno",       nome: "Guilherme Souza" },
-};
-
 function Login({ onLogin, dark, onToggleTheme }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setError("");
-    const key = email.trim().toLowerCase();
-    const base = USERS[key];
-    if (base && base.senha === senha) {
-      onLogin(base.role, key, base.nome);
-      return;
+    setLoading(true);
+    try {
+      const user = await apiLogin(email.trim().toLowerCase(), senha);
+      onLogin(user.role, user.email, user.nome, user.materias);
+    } catch (err) {
+      setError(err.message || "E-mail ou senha incorretos.");
+    } finally {
+      setLoading(false);
     }
-    const dynProf = loadProfessores().find(p => p.email === key);
-    if (dynProf && dynProf.senha === senha) {
-      onLogin("professor", key, dynProf.nome);
-      return;
-    }
-    setError("E-mail ou senha incorretos.");
   };
 
   return (
@@ -48,7 +41,9 @@ function Login({ onLogin, dark, onToggleTheme }) {
 
         {error && <p className="uv-login-error">{error}</p>}
 
-        <Button type="submit" className="uv-w-full" size="lg">Entrar</Button>
+        <Button type="submit" className="uv-w-full" size="lg" disabled={loading}>
+          {loading ? "Entrando…" : "Entrar"}
+        </Button>
         <a className="uv-login-forgot" href="#" onClick={(e) => e.preventDefault()}>Esqueceu sua senha?</a>
 
         <p className="uv-login-hint">

@@ -1,10 +1,20 @@
 /* Univap Fichas — Gerenciar Fichas */
 function GerenciarFichas({ user, onView }) {
+  const [todasAvals, setTodasAvals] = useState([]);
+  const [grupos, setGrupos] = useState([]);
   const [q,        setQ]        = useState("");
   const [filtDisc, setFiltDisc] = useState("");
   const [detalhe,  setDetalhe]  = useState(null);
 
-  const todasAvals = loadAvaliacoes().filter(a => a.professorEmail === user?.email);
+  useEffect(() => {
+    Promise.all([apiGetAvals(), apiGetGrupos()])
+      .then(([avals, grps]) => {
+        setTodasAvals(avals.filter(a => a.professorEmail === user?.email));
+        setGrupos(grps);
+      })
+      .catch(console.error);
+  }, [user?.email]);
+
   const disciplinas = [...new Set(todasAvals.map(a => a.disciplina))].sort();
 
   const filtered = todasAvals.filter(a =>
@@ -14,7 +24,7 @@ function GerenciarFichas({ user, onView }) {
   ).sort((a, b) => b.data.localeCompare(a.data));
 
   if (detalhe) {
-    return <DetalheFichaPage aval={detalhe} onVoltar={() => setDetalhe(null)} />;
+    return <DetalheFichaPage aval={detalhe} grupos={grupos} onVoltar={() => setDetalhe(null)} />;
   }
 
   return (
@@ -85,8 +95,8 @@ function GerenciarFichas({ user, onView }) {
   );
 }
 
-function DetalheFichaPage({ aval, onVoltar }) {
-  const grupo = loadGrupos().find(g => g.nome === aval.grupoNome);
+function DetalheFichaPage({ aval, grupos, onVoltar }) {
+  const grupo = grupos.find(g => g.nome === aval.grupoNome);
   const integrantes = grupo ? grupo.integrantes : [];
 
   return (
@@ -118,7 +128,6 @@ function DetalheFichaPage({ aval, onVoltar }) {
               const ia = (aval.integrantesAval || []).find(x => x.matricula === m.matricula);
               return (
                 <li key={`${m.nome}-${m.matricula}`} className="uv-integrante">
-
                   <Avatar nome={m.nome} size={32} idx={i} />
                   <div className="uv-integrante-info">
                     <span className="uv-integrante-nome">

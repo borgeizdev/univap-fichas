@@ -2,50 +2,61 @@
 
 function CadastroMaterias() {
   const toast = useToast();
-  const [materias, setMaterias] = useState(loadDisciplinas);
-  const [nome, setNome]         = useState("");
-  const [curso, setCurso]       = useState("");
-  const [editIdx, setEditIdx]   = useState(null);
-  const [editNome, setEditNome] = useState("");
+  const [materias, setMaterias] = useState([]);
+  const [nome, setNome]           = useState("");
+  const [curso, setCurso]         = useState("");
+  const [editId, setEditId]       = useState(null);
+  const [editNome, setEditNome]   = useState("");
   const [editCurso, setEditCurso] = useState("");
 
-  const salvar = (ms) => { setMaterias(ms); saveDisciplinas(ms); };
+  useEffect(() => {
+    apiGetDiscs().then(setMaterias).catch(console.error);
+  }, []);
 
-  const adicionar = () => {
+  const adicionar = async () => {
     const n = nome.trim();
     if (!n)     { toast("Informe o nome da matéria.", "warn"); return; }
     if (!curso) { toast("Selecione o curso da matéria.", "warn"); return; }
-    if (materias.some(m => m.nome === n && m.curso === curso)) {
-      toast("Matéria já cadastrada para este curso.", "warn"); return;
+    try {
+      const nova = await apiCreateDisc({ nome: n, curso });
+      setMaterias(prev => [...prev, nova]);
+      setNome("");
+      setCurso("");
+      toast("Matéria cadastrada com sucesso!", "success");
+    } catch (e) {
+      toast(e.message || "Erro ao cadastrar matéria.", "error");
     }
-    salvar([...materias, { nome: n, curso }]);
-    setNome("");
-    setCurso("");
-    toast("Matéria cadastrada com sucesso!", "success");
   };
 
-  const iniciarEdicao = (i) => {
-    setEditIdx(i === editIdx ? null : i);
-    setEditNome(materias[i].nome);
-    setEditCurso(materias[i].curso);
+  const iniciarEdicao = (m) => {
+    setEditId(editId === m.id ? null : m.id);
+    setEditNome(m.nome);
+    setEditCurso(m.curso);
   };
 
-  const salvarEdicao = () => {
+  const salvarEdicao = async () => {
     const n = editNome.trim();
-    if (!n)       { toast("Informe o nome da matéria.", "warn"); return; }
-    if (!editCurso) { toast("Selecione o curso.", "warn"); return; }
-    if (materias.some((m, i) => i !== editIdx && m.nome === n && m.curso === editCurso)) {
-      toast("Matéria já cadastrada para este curso.", "warn"); return;
+    if (!n)        { toast("Informe o nome da matéria.", "warn"); return; }
+    if (!editCurso){ toast("Selecione o curso.", "warn"); return; }
+    try {
+      await apiUpdateDisc(editId, { nome: n, curso: editCurso });
+      setMaterias(prev => prev.map(m => m.id === editId ? { ...m, nome: n, curso: editCurso } : m));
+      setEditId(null);
+      toast("Matéria atualizada com sucesso!", "success");
+    } catch (e) {
+      toast(e.message || "Erro ao atualizar matéria.", "error");
     }
-    salvar(materias.map((m, i) => i === editIdx ? { nome: n, curso: editCurso } : m));
-    setEditIdx(null);
-    toast("Matéria atualizada com sucesso!", "success");
   };
 
-  const remover = (idx) => {
-    if (editIdx === idx) setEditIdx(null);
-    salvar(materias.filter((_, i) => i !== idx));
-    toast("Matéria removida.", "success");
+  const remover = async (id) => {
+    if (editId === id) setEditId(null);
+    try {
+      await apiDeleteDisc(id);
+      setMaterias(prev => prev.filter(m => m.id !== id));
+      toast("Matéria removida.", "success");
+    } catch (e) {
+      toast(e.message || "Erro ao remover matéria.", "error");
+    }
   };
 
   const onKey   = (e) => { if (e.key === "Enter") adicionar(); };
@@ -59,7 +70,6 @@ function CadastroMaterias() {
       />
 
       <div className="uv-materias-layout">
-        {/* Coluna esquerda — formulário */}
         <Card>
           <CardHead title="Cadastrar Nova Matéria" />
           <div className="uv-form-stack">
@@ -85,7 +95,6 @@ function CadastroMaterias() {
           </div>
         </Card>
 
-        {/* Coluna direita — lista */}
         <Card style={{ display: "flex", flexDirection: "column" }}>
           <CardHead
             title="Matérias Cadastradas"
@@ -110,8 +119,8 @@ function CadastroMaterias() {
                 </thead>
                 <tbody>
                   {materias.map((m, i) => (
-                    <React.Fragment key={`${m.nome}-${m.curso}-${i}`}>
-                      <tr className={editIdx === i ? "uv-tr-editing" : ""}>
+                    <React.Fragment key={m.id}>
+                      <tr className={editId === m.id ? "uv-tr-editing" : ""}>
                         <td className="uv-td-muted" style={{ width: 48 }}>{i + 1}</td>
                         <td>{m.nome}</td>
                         <td>
@@ -122,16 +131,16 @@ function CadastroMaterias() {
                         </td>
                         <td className="ta-r">
                           <div className="uv-actions-cell">
-                            <button className="uv-icon-btn sm" title="Editar" onClick={() => iniciarEdicao(i)}>
+                            <button className="uv-icon-btn sm" title="Editar" onClick={() => iniciarEdicao(m)}>
                               <Icon name="edit" size={15} />
                             </button>
-                            <button className="uv-icon-btn sm danger" title="Remover matéria" onClick={() => remover(i)}>
+                            <button className="uv-icon-btn sm danger" title="Remover matéria" onClick={() => remover(m.id)}>
                               <Icon name="x" size={16} />
                             </button>
                           </div>
                         </td>
                       </tr>
-                      {editIdx === i && (
+                      {editId === m.id && (
                         <tr className="uv-tr-edit-form">
                           <td colSpan={4}>
                             <div className="uv-inline-edit">
@@ -155,7 +164,7 @@ function CadastroMaterias() {
                               </div>
                               <div className="uv-form-actions">
                                 <Button icon="check" onClick={salvarEdicao}>Salvar</Button>
-                                <Button variant="ghost" icon="x" onClick={() => setEditIdx(null)}>Cancelar</Button>
+                                <Button variant="ghost" icon="x" onClick={() => setEditId(null)}>Cancelar</Button>
                               </div>
                             </div>
                           </td>

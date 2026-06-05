@@ -1,0 +1,43 @@
+/* Univap Fichas — cliente de API */
+const API_BASE = "http://localhost:3001/api";
+
+async function _req(method, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(API_BASE + path, opts);
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ error: r.statusText }));
+    throw new Error(err.error || r.statusText);
+  }
+  return r.json();
+}
+
+const _get = (p)    => _req("GET",    p);
+const _post = (p, b) => _req("POST",   p, b);
+const _put  = (p, b) => _req("PUT",    p, b);
+const _del  = (p)    => _req("DELETE", p);
+
+/* Auth */
+const apiLogin = (email, senha) => _post("/auth/login", { email, senha });
+
+/* Grupos */
+const apiGetGrupos    = ()       => _get("/grupos");
+const apiCreateGrupo  = (g)      => _post("/grupos", g);
+const apiUpdateGrupo  = (id, g)  => _put("/grupos/" + id, g);
+const apiDeleteGrupo  = (id)     => _del("/grupos/" + id);
+
+/* Disciplinas */
+const apiGetDiscs    = ()       => _get("/disciplinas");
+const apiCreateDisc  = (d)      => _post("/disciplinas", d);
+const apiUpdateDisc  = (id, d)  => _put("/disciplinas/" + id, d);
+const apiDeleteDisc  = (id)     => _del("/disciplinas/" + id);
+
+/* Avaliações */
+const apiGetAvals   = ()  => _get("/avaliacoes");
+const apiCreateAval = (a) => _post("/avaliacoes", a);
+
+/* Professores */
+const apiGetProfs    = ()       => _get("/professores");
+const apiCreateProf  = (p)      => _post("/professores", p);
+const apiUpdateProf  = (id, p)  => _put("/professores/" + id, p);
+const apiDeleteProf  = (id)     => _del("/professores/" + id);

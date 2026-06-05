@@ -10,14 +10,20 @@ function StatCard({ icon, label, value, tone = "blue", delta }) {
 }
 
 function Dashboard({ onView }) {
-  const avaliacoes = loadAvaliacoes();
-  const grupos     = loadGrupos();
+  const [avaliacoes, setAvaliacoes] = useState([]);
+  const [grupos, setGrupos] = useState([]);
 
-  const total = avaliacoes.length;
+  useEffect(() => {
+    Promise.all([apiGetAvals(), apiGetGrupos()])
+      .then(([avals, grps]) => { setAvaliacoes(avals); setGrupos(grps); })
+      .catch(console.error);
+  }, []);
+
+  const total    = avaliacoes.length;
   const avaliados = new Set(avaliacoes.map(a => a.grupoNome));
-  const pend   = grupos.filter(g => !avaliados.has(g.nome)).length;
-  const comNota = avaliacoes.filter(a => a.nota != null);
-  const media  = comNota.length > 0
+  const pend     = grupos.filter(g => !avaliados.has(g.nome)).length;
+  const comNota  = avaliacoes.filter(a => a.nota != null);
+  const media    = comNota.length > 0
     ? (comNota.reduce((s, a) => s + a.nota, 0) / comNota.length).toFixed(1)
     : "—";
   const numTurmas = [...new Set(grupos.map(g => `${(g.ano||"").replace(" ano","")}${g.turma}`))].length;
@@ -25,7 +31,6 @@ function Dashboard({ onView }) {
   const ultimas   = [...avaliacoes].sort((a, b) => b.data.localeCompare(a.data)).slice(0, 5);
   const pendentes = grupos.filter(g => !avaliados.has(g.nome)).slice(0, 5);
 
-  /* chart data */
   const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
   const mesesCount = {};
   avaliacoes.forEach(a => {

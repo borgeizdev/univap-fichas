@@ -1,8 +1,15 @@
 /* Univap Fichas — Nova Ficha (Professor) */
 
 function NovaAvaliacao({ user }) {
-  const grupos = loadGrupos();
+  const [grupos, setGrupos] = useState([]);
+  const [avaliacoes, setAvaliacoes] = useState([]);
   const [selecionado, setSelecionado] = useState(null);
+
+  useEffect(() => {
+    Promise.all([apiGetGrupos(), apiGetAvals()])
+      .then(([gs, avals]) => { setGrupos(gs); setAvaliacoes(avals); })
+      .catch(console.error);
+  }, []);
 
   if (selecionado) {
     return <FormAvaliacao grupo={selecionado} user={user} onVoltar={() => setSelecionado(null)} />;
@@ -20,7 +27,7 @@ function NovaAvaliacao({ user }) {
       ) : (
         <div className="uv-grid-3">
           {grupos.map((g) => (
-            <GrupoAvalCard key={g.id} grupo={g} onSelecionar={() => setSelecionado(g)} />
+            <GrupoAvalCard key={g.id} grupo={g} avaliacoes={avaliacoes} onSelecionar={() => setSelecionado(g)} />
           ))}
         </div>
       )}
@@ -28,8 +35,8 @@ function NovaAvaliacao({ user }) {
   );
 }
 
-function GrupoAvalCard({ grupo, onSelecionar }) {
-  const n = loadAvaliacoes().filter(a => a.grupoNome === grupo.nome).length;
+function GrupoAvalCard({ grupo, avaliacoes, onSelecionar }) {
+  const n = avaliacoes.filter(a => a.grupoNome === grupo.nome).length;
   return (
     <Card hover className="uv-grupo-card">
       <div className="uv-grupo-top">
@@ -54,7 +61,7 @@ function GrupoAvalCard({ grupo, onSelecionar }) {
 
 function FormAvaliacao({ grupo, user, onVoltar }) {
   const toast = useToast();
-  const materias = getProfMaterias(user.email) || loadDisciplinas().map(d => d.nome);
+  const [disciplinas, setDisciplinas] = useState([]);
   const [f, setF] = useState({
     disciplina: grupo.materia || "",
     anotacoes: "", positivos: "", melhorar: "",
@@ -63,6 +70,16 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
   const [integrantesAval, setIntegrantesAval] = useState(
     grupo.integrantes.map(m => ({ nome: m.nome, matricula: m.matricula, nota: "", obs: "" }))
   );
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    apiGetDiscs()
+      .then(discs => setDisciplinas(discs.map(d => d.nome)))
+      .catch(console.error);
+  }, []);
+
+  const profMaterias = user.materias?.length > 0 ? user.materias : null;
+  const materias = profMaterias || disciplinas;
 
   const set = (k) => (val) => setF(s => ({ ...s, [k]: val.target ? val.target.value : val }));
   const updIntegrante = (i, k) => (e) =>
@@ -75,30 +92,37 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
     return Object.keys(e).length === 0;
   };
 
-  const publicar = () => {
+  const publicar = async () => {
     if (!validate()) { toast("Selecione a disciplina.", "warn"); return; }
-    saveAvaliacoes([...loadAvaliacoes(), {
-      id: "aval_" + Date.now(),
-      grupoNome: grupo.nome,
-      criadorEmail: grupo.criadorEmail || "",
-      professorEmail: user.email,
-      professorNome: user.nome,
-      disciplina: f.disciplina,
-      nota: null,
-      anotacoes: f.anotacoes,
-      positivos: f.positivos,
-      melhorar: f.melhorar,
-      integrantesAval: integrantesAval.map(x => ({
-        nome: x.nome,
-        matricula: x.matricula,
-        nota: x.nota !== "" ? parseFloat(x.nota) : null,
-        obs: x.obs.trim(),
-      })),
-      data: new Date().toISOString().split("T")[0],
-      status: "Publicada",
-    }]);
-    toast("Avaliação publicada com sucesso!", "success");
-    onVoltar();
+    setSaving(true);
+    try {
+      await apiCreateAval({
+        id: "aval_" + Date.now(),
+        grupoNome: grupo.nome,
+        criadorEmail: grupo.criadorEmail || "",
+        professorEmail: user.email,
+        professorNome: user.nome,
+        disciplina: f.disciplina,
+        nota: null,
+        anotacoes: f.anotacoes,
+        positivos: f.positivos,
+        melhorar: f.melhorar,
+        integrantesAval: integrantesAval.map(x => ({
+          nome: x.nome,
+          matricula: x.matricula,
+          nota: x.nota !== "" ? parseFloat(x.nota) : null,
+          obs: x.obs.trim(),
+        })),
+        data: new Date().toISOString().split("T")[0],
+        status: "Publicada",
+      });
+      toast("Avaliação publicada com sucesso!", "success");
+      onVoltar();
+    } catch (e) {
+      toast(e.message || "Erro ao publicar avaliação.", "error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -109,7 +133,6 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
         action={<Button variant="ghost" icon="chevronLeft" onClick={onVoltar}>Voltar</Button>}
       />
 
-      {/* Disciplina + integrantes com nota/obs individual */}
       <Card className="uv-mb-card">
         <div className="uv-form-stack">
           <Field label="Disciplina" error={errors.disciplina}>
@@ -146,7 +169,6 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
         </div>
       </Card>
 
-      {/* Observações gerais */}
       <Card>
         <CardHead title="Observações Gerais" />
         <div className="uv-form-stack">
@@ -168,7 +190,9 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
 
           <div className="uv-form-actions">
             <Button variant="ghost" onClick={onVoltar}>Cancelar</Button>
-            <Button icon="send" onClick={publicar}>Publicar Avaliação</Button>
+            <Button icon="send" onClick={publicar} disabled={saving}>
+              {saving ? "Publicando…" : "Publicar Avaliação"}
+            </Button>
           </div>
         </div>
       </Card>

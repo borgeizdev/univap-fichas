@@ -21,13 +21,23 @@ function ListRow({ label, right, tone, onClick }) {
 }
 
 function ProfInicio({ user, go }) {
-  const avaliacoes = loadAvaliacoes().filter(a => a.professorEmail === user.email);
-  const grupos = loadGrupos();
+  const [avaliacoes, setAvaliacoes] = useState([]);
+  const [grupos, setGrupos] = useState([]);
+
+  useEffect(() => {
+    Promise.all([apiGetAvals(), apiGetGrupos()])
+      .then(([avals, grps]) => {
+        setAvaliacoes(avals.filter(a => a.professorEmail === user.email));
+        setGrupos(grps);
+      })
+      .catch(console.error);
+  }, [user.email]);
+
   const avaliados = new Set(avaliacoes.map(a => a.grupoNome));
   const pendentes = grupos.filter(g => !avaliados.has(g.nome));
-  const ultimas = [...avaliacoes].sort((a, b) => b.data.localeCompare(a.data)).slice(0, 3);
-  const comNota = avaliacoes.filter(a => a.nota != null);
-  const media = comNota.length > 0
+  const ultimas   = [...avaliacoes].sort((a, b) => b.data.localeCompare(a.data)).slice(0, 3);
+  const comNota   = avaliacoes.filter(a => a.nota != null);
+  const media     = comNota.length > 0
     ? (comNota.reduce((s, a) => s + a.nota, 0) / comNota.length).toFixed(1)
     : "—";
 

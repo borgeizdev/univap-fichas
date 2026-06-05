@@ -1,35 +1,48 @@
 /* Univap Fichas — Meu Grupo (Aluno) */
 
-/* ── Tela principal ─────────────────────────────────────────────────────── */
 function MeuGrupo({ user }) {
   const toast = useToast();
-  const [grupos, setGrupos] = useState(loadGrupos);
+  const [grupos, setGrupos] = useState([]);
   const [criando, setCriando] = useState(false);
   const [grupoAtivo, setGrupoAtivo] = useState(null);
 
-  const salvarGrupos = (gs) => { setGrupos(gs); saveGrupos(gs); };
+  useEffect(() => {
+    apiGetGrupos().then(setGrupos).catch(console.error);
+  }, []);
 
-  const onCriar = (novoGrupo) => {
-    const gs = [...grupos, novoGrupo];
-    salvarGrupos(gs);
-    setGrupoAtivo(gs.length - 1);
-    setCriando(false);
-    toast("Grupo criado com sucesso!", "success");
+  const onCriar = async (novoGrupo) => {
+    try {
+      await apiCreateGrupo(novoGrupo);
+      const gs = await apiGetGrupos();
+      setGrupos(gs);
+      setGrupoAtivo(gs.findIndex(g => g.id === novoGrupo.id));
+      setCriando(false);
+      toast("Grupo criado com sucesso!", "success");
+    } catch (e) {
+      toast(e.message || "Erro ao criar grupo.", "error");
+    }
   };
 
-  const onAtualizarGrupo = (idx, grupoAtualizado) => {
-    const gs = grupos.map((g, i) => i === idx ? grupoAtualizado : g);
-    salvarGrupos(gs);
+  const onAtualizarGrupo = async (grupoAtualizado) => {
+    try {
+      await apiUpdateGrupo(grupoAtualizado.id, grupoAtualizado);
+      setGrupos(prev => prev.map(g => g.id === grupoAtualizado.id ? grupoAtualizado : g));
+    } catch (e) {
+      toast(e.message || "Erro ao atualizar grupo.", "error");
+    }
   };
 
-  const onExcluirGrupo = (idx) => {
-    const gs = grupos.filter((_, i) => i !== idx);
-    salvarGrupos(gs);
-    setGrupoAtivo(null);
-    toast("Grupo excluído.", "success");
+  const onExcluirGrupo = async (id) => {
+    try {
+      await apiDeleteGrupo(id);
+      setGrupos(prev => prev.filter(g => g.id !== id));
+      setGrupoAtivo(null);
+      toast("Grupo excluído.", "success");
+    } catch (e) {
+      toast(e.message || "Erro ao excluir grupo.", "error");
+    }
   };
 
-  /* lista de grupos do aluno */
   if (!criando && grupoAtivo === null) {
     return (
       <>
@@ -48,7 +61,6 @@ function MeuGrupo({ user }) {
             text="Crie seu primeiro grupo de projeto para começar."
           />
         ) : (
-          /* eslint-disable-next-line */
           <div className="uv-grid-3">
             {grupos.map((g, i) => (
               <Card key={g.id} hover className="uv-grupo-card" onClick={() => setGrupoAtivo(i)}>
@@ -73,7 +85,6 @@ function MeuGrupo({ user }) {
     );
   }
 
-  /* formulário de criação */
   if (criando) {
     return (
       <CriarGrupoForm
@@ -85,13 +96,12 @@ function MeuGrupo({ user }) {
     );
   }
 
-  /* gerenciamento do grupo ativo */
   return (
     <GerenciarGrupo
       grupo={grupos[grupoAtivo]}
       onVoltar={() => setGrupoAtivo(null)}
-      onAtualizar={(g) => onAtualizarGrupo(grupoAtivo, g)}
-      onExcluir={() => onExcluirGrupo(grupoAtivo)}
+      onAtualizar={(g) => onAtualizarGrupo(g)}
+      onExcluir={() => onExcluirGrupo(grupos[grupoAtivo].id)}
     />
   );
 }
@@ -106,14 +116,18 @@ function gerarNomeGrupo(ano, turma, grupos) {
 function CriarGrupoForm({ user, grupos, onSalvar, onCancelar }) {
   const toast = useToast();
   const [f, setF] = useState({ curso: "", ano: "", turma: "", materia: "" });
+  const [disciplinas, setDisciplinas] = useState([]);
+
+  useEffect(() => {
+    apiGetDiscs().then(setDisciplinas).catch(console.error);
+  }, []);
 
   const setCurso = (curso) => setF(s => ({ ...s, curso, turma: "", materia: "" }));
   const set = (k) => (val) => setF(s => ({ ...s, [k]: val.target ? val.target.value : val }));
 
-  const todasDisc    = loadDisciplinas();
   const turmasFiltradas = f.curso ? (MOCK.turmasPorCurso[f.curso] || MOCK.turmas) : [];
   const discFiltradas   = f.curso
-    ? todasDisc.filter(d => d.curso === f.curso).map(d => d.nome)
+    ? disciplinas.filter(d => d.curso === f.curso).map(d => d.nome)
     : [];
 
   const salvar = () => {
@@ -238,7 +252,6 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
         }
       />
 
-      {/* Info */}
       <Card className="uv-mb-card">
         <CardHead title="Informações do Grupo" />
         <div className="uv-grupo-info-grid">
@@ -249,7 +262,6 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
         </div>
       </Card>
 
-      {/* Integrantes */}
       <Card>
         <CardHead
           title="Integrantes"
@@ -288,7 +300,6 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
           </table>
         </div>
 
-        {/* Adicionar integrante */}
         <div className="uv-add-member">
           <p className="uv-add-member-title">Adicionar Integrante</p>
           <div className="uv-add-member-row">
