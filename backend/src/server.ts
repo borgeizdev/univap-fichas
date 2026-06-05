@@ -1,51 +1,105 @@
-require('dotenv').config();
-const express = require('express');
-const cors    = require('cors');
-const bcrypt  = require('bcrypt');
-const { Pool } = require('pg');
+import 'dotenv/config';
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import bcrypt from 'bcrypt';
+import { Pool, PoolClient } from 'pg';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const pool = new Pool({
-  host:     process.env.DB_HOST || 'localhost',
-  port:     parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME || 'univap_fichas',
-  user:     process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASS || 'Mateus2009#',
+  host:     process.env.DB_HOST     || 'localhost',
+  port:     parseInt(process.env.DB_PORT || '5432'),
+  database: process.env.DB_NAME     || 'univap_fichas',
+  user:     process.env.DB_USER     || 'postgres',
+  password: process.env.DB_PASS     || 'Mateus2009#',
 });
 
+/* ── Types ───────────────────────────────────────────────────────────────── */
+interface UsuarioRow {
+  id:       number;
+  email:    string;
+  senha:    string;
+  nome:     string;
+  role:     'coordenador' | 'professor' | 'aluno';
+  materias: string[];
+}
+
+interface GrupoRow {
+  id:            string;
+  nome:          string;
+  curso:         string;
+  ano:           string;
+  turma:         string;
+  materia:       string | null;
+  criador_email: string;
+  integrantes:   IntegranteItem[];
+}
+
+interface IntegranteItem {
+  nome:      string;
+  matricula: string;
+  lider:     boolean;
+}
+
+interface AvaliacaoRow {
+  id:              string;
+  grupo_nome:      string;
+  criador_email:   string | null;
+  professor_email: string;
+  professor_nome:  string;
+  disciplina:      string;
+  nota:            string | null;
+  anotacoes:       string;
+  positivos:       string;
+  melhorar:        string;
+  data:            Date | string;
+  status:          string;
+  integrantes_aval: IntegranteAvalItem[];
+}
+
+interface IntegranteAvalItem {
+  nome:      string;
+  matricula: string;
+  nota:      string | null;
+  obs:       string;
+}
+
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
-const fmt = (row) => ({
-  id:           row.id,
-  email:        row.email,
-  nome:         row.nome,
-  role:         row.role,
-  materias:     row.materias || [],
+const fmtUsuario = (row: UsuarioRow) => ({
+  id:       row.id,
+  email:    row.email,
+  nome:     row.nome,
+  role:     row.role,
+  materias: row.materias || [],
 });
 
 /* ── Auth ────────────────────────────────────────────────────────────────── */
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
-    const { email, senha } = req.body;
-    const { rows } = await pool.query(
-      'SELECT * FROM usuarios WHERE email = $1', [email.toLowerCase().trim()]
+    const { email, senha } = req.body as { email: unknown; senha: unknown };
+    if (typeof email !== 'string' || typeof senha !== 'string') {
+      return res.status(400).json({ error: 'email e senha são obrigatórios.' });
+    }
+    const { rows } = await pool.query<UsuarioRow>(
+      'SELECT * FROM usuarios WHERE email = $1',
+      [email.toLowerCase().trim()]
     );
     if (!rows.length) return res.status(401).json({ error: 'Credenciais inválidas.' });
     const u = rows[0];
     const ok = await bcrypt.compare(senha, u.senha);
     if (!ok) return res.status(401).json({ error: 'Credenciais inválidas.' });
-    res.json(fmt(u));
+    res.json(fmtUsuario(u));
   } catch (e) {
-    res.status(500).json({ error: e.message });
-  }j
+    res.status(500).json({ error: (e as Error).message });
+  }
 });
 
 /* ── Grupos ──────────────────────────────────────────────────────────────── */
-app.get('/api/grupos', async (req, res) => {
+app.get('/api/grupos', async (_req: Request, res: Response) => {
   try {
-    const { rows } = await pool.query(`
+    const { rows } = await pool.query<GrupoRow>(`
       SELECT g.*,
         COALESCE(
           JSON_AGG(
@@ -73,14 +127,18 @@ app.get('/api/grupos', async (req, res) => {
       integrantes:  g.integrantes,
     })));
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
-app.post('/api/grupos', async (req, res) => {
-  const client = await pool.connect();
+app.post('/api/grupos', async (req: Request, res: Response) => {
+  const client: PoolClient = await pool.connect();
   try {
-    const { id, nome, curso, ano, turma, materia, criadorEmail, integrantes = [] } = req.body;
+    const { id, nome, curso, ano, turma, materia, criadorEmail, integrantes = [] } =
+      req.body as {
+        id: string; nome: string; curso: string; ano: string; turma: string;
+        materia?: string; criadorEmail: string; integrantes?: IntegranteItem[];
+      };
     await client.query('BEGIN');
     await client.query(
       'INSERT INTO grupos (id, nome, curso, ano, turma, materia, criador_email) VALUES ($1,$2,$3,$4,$5,$6,$7)',
@@ -96,16 +154,20 @@ app.post('/api/grupos', async (req, res) => {
     res.status(201).json({ id });
   } catch (e) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   } finally {
     client.release();
   }
 });
 
-app.put('/api/grupos/:id', async (req, res) => {
-  const client = await pool.connect();
+app.put('/api/grupos/:id', async (req: Request, res: Response) => {
+  const client: PoolClient = await pool.connect();
   try {
-    const { nome, curso, ano, turma, materia, integrantes = [] } = req.body;
+    const { nome, curso, ano, turma, materia, integrantes = [] } =
+      req.body as {
+        nome: string; curso: string; ano: string; turma: string;
+        materia?: string; integrantes?: IntegranteItem[];
+      };
     await client.query('BEGIN');
     await client.query(
       'UPDATE grupos SET nome=$1, curso=$2, ano=$3, turma=$4, materia=$5 WHERE id=$6',
@@ -122,69 +184,71 @@ app.put('/api/grupos/:id', async (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   } finally {
     client.release();
   }
 });
 
-app.delete('/api/grupos/:id', async (req, res) => {
+app.delete('/api/grupos/:id', async (req: Request, res: Response) => {
   try {
     await pool.query('DELETE FROM grupos WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
 /* ── Disciplinas ─────────────────────────────────────────────────────────── */
-app.get('/api/disciplinas', async (req, res) => {
+app.get('/api/disciplinas', async (_req: Request, res: Response) => {
   try {
     const { rows } = await pool.query('SELECT * FROM disciplinas ORDER BY curso, nome');
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
-app.post('/api/disciplinas', async (req, res) => {
+app.post('/api/disciplinas', async (req: Request, res: Response) => {
   try {
-    const { nome, curso } = req.body;
+    const { nome, curso } = req.body as { nome: string; curso: string };
     const { rows } = await pool.query(
       'INSERT INTO disciplinas (nome, curso) VALUES ($1,$2) RETURNING *',
       [nome, curso]
     );
     res.status(201).json(rows[0]);
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'Matéria já cadastrada para este curso.' });
-    res.status(500).json({ error: e.message });
+    const err = e as NodeJS.ErrnoException & { code?: string };
+    if (err.code === '23505') return res.status(409).json({ error: 'Matéria já cadastrada para este curso.' });
+    res.status(500).json({ error: err.message });
   }
 });
 
-app.put('/api/disciplinas/:id', async (req, res) => {
+app.put('/api/disciplinas/:id', async (req: Request, res: Response) => {
   try {
-    const { nome, curso } = req.body;
+    const { nome, curso } = req.body as { nome: string; curso: string };
     await pool.query('UPDATE disciplinas SET nome=$1, curso=$2 WHERE id=$3', [nome, curso, req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'Matéria já cadastrada para este curso.' });
-    res.status(500).json({ error: e.message });
+    const err = e as NodeJS.ErrnoException & { code?: string };
+    if (err.code === '23505') return res.status(409).json({ error: 'Matéria já cadastrada para este curso.' });
+    res.status(500).json({ error: err.message });
   }
 });
 
-app.delete('/api/disciplinas/:id', async (req, res) => {
+app.delete('/api/disciplinas/:id', async (req: Request, res: Response) => {
   try {
     await pool.query('DELETE FROM disciplinas WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
 /* ── Avaliações ──────────────────────────────────────────────────────────── */
-app.get('/api/avaliacoes', async (req, res) => {
+app.get('/api/avaliacoes', async (_req: Request, res: Response) => {
   try {
-    const { rows } = await pool.query(`
+    const { rows } = await pool.query<AvaliacaoRow>(`
       SELECT a.*,
         COALESCE(
           JSON_AGG(
@@ -225,17 +289,22 @@ app.get('/api/avaliacoes', async (req, res) => {
       })),
     })));
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
-app.post('/api/avaliacoes', async (req, res) => {
-  const client = await pool.connect();
+app.post('/api/avaliacoes', async (req: Request, res: Response) => {
+  const client: PoolClient = await pool.connect();
   try {
     const {
       id, grupoNome, criadorEmail, professorEmail, professorNome,
       disciplina, nota, anotacoes, positivos, melhorar, integrantesAval = [], data, status,
-    } = req.body;
+    } = req.body as {
+      id: string; grupoNome: string; criadorEmail?: string;
+      professorEmail: string; professorNome: string; disciplina: string;
+      nota?: number | null; anotacoes?: string; positivos?: string; melhorar?: string;
+      integrantesAval?: IntegranteAvalItem[]; data: string; status?: string;
+    };
     await client.query('BEGIN');
     await client.query(
       `INSERT INTO avaliacoes
@@ -256,27 +325,28 @@ app.post('/api/avaliacoes', async (req, res) => {
     res.status(201).json({ id });
   } catch (e) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   } finally {
     client.release();
   }
 });
 
 /* ── Professores ─────────────────────────────────────────────────────────── */
-app.get('/api/professores', async (req, res) => {
+app.get('/api/professores', async (_req: Request, res: Response) => {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await pool.query<UsuarioRow>(
       "SELECT id, email, nome, materias FROM usuarios WHERE role='professor' ORDER BY nome"
     );
     res.json(rows.map(p => ({ id: p.id, nome: p.nome, email: p.email, materias: p.materias || [] })));
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
-app.post('/api/professores', async (req, res) => {
+app.post('/api/professores', async (req: Request, res: Response) => {
   try {
-    const { nome, email, senha, materias = [] } = req.body;
+    const { nome, email, senha, materias = [] } =
+      req.body as { nome: string; email: string; senha: string; materias?: string[] };
     const hash = await bcrypt.hash(senha, 10);
     const { rows } = await pool.query(
       "INSERT INTO usuarios (nome, email, senha, role, materias) VALUES ($1,$2,$3,'professor',$4) RETURNING id",
@@ -284,14 +354,16 @@ app.post('/api/professores', async (req, res) => {
     );
     res.status(201).json({ id: rows[0].id, nome: nome.trim(), email: email.toLowerCase().trim(), materias });
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'Já existe um professor com este e-mail.' });
-    res.status(500).json({ error: e.message });
+    const err = e as NodeJS.ErrnoException & { code?: string };
+    if (err.code === '23505') return res.status(409).json({ error: 'Já existe um professor com este e-mail.' });
+    res.status(500).json({ error: err.message });
   }
 });
 
-app.put('/api/professores/:id', async (req, res) => {
+app.put('/api/professores/:id', async (req: Request, res: Response) => {
   try {
-    const { nome, email, senha, materias = [] } = req.body;
+    const { nome, email, senha, materias = [] } =
+      req.body as { nome: string; email: string; senha?: string; materias?: string[] };
     if (senha) {
       const hash = await bcrypt.hash(senha, 10);
       await pool.query(
@@ -306,20 +378,21 @@ app.put('/api/professores/:id', async (req, res) => {
     }
     res.json({ ok: true });
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'Já existe um professor com este e-mail.' });
-    res.status(500).json({ error: e.message });
+    const err = e as NodeJS.ErrnoException & { code?: string };
+    if (err.code === '23505') return res.status(409).json({ error: 'Já existe um professor com este e-mail.' });
+    res.status(500).json({ error: err.message });
   }
 });
 
-app.delete('/api/professores/:id', async (req, res) => {
+app.delete('/api/professores/:id', async (req: Request, res: Response) => {
   try {
     await pool.query('DELETE FROM usuarios WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
 /* ── Start ───────────────────────────────────────────────────────────────── */
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001');
 app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
