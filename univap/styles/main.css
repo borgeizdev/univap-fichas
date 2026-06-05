@@ -428,6 +428,8 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 .uv-stat.tone-green  { border-top: 3px solid var(--green); }
 .uv-stat.tone-amber  { border-top: 3px solid var(--amber); }
 .uv-stat.tone-violet { border-top: 3px solid var(--violet); }
+.uv-stat { border-color: #d1d5de; }
+[data-theme="dark"] .uv-stat { border-color: var(--border); }
 
 /* ---- status badge + dot ---- */
 .uv-status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
