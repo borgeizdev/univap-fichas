@@ -80,6 +80,21 @@ export const AvaliacaoCreateSchema = z.object({
   status:          z.string().max(30).optional().default('Publicada'),
 });
 
+export const AvaliacaoUpdateSchema = z.object({
+  grupoNome:       z.string().min(1).max(120).trim(),
+  criadorEmail:    z.string().email().max(255).optional(),
+  professorEmail:  z.string().email().max(255),
+  professorNome:   z.string().min(1).max(120).trim(),
+  disciplina:      z.string().min(1).max(120).trim(),
+  nota:            z.number().min(0).max(10).nullable().optional(),
+  anotacoes:       z.string().max(2000).optional().default(''),
+  positivos:       z.string().max(2000).optional().default(''),
+  melhorar:        z.string().max(2000).optional().default(''),
+  integrantesAval: z.array(IntegranteAvalSchema).optional().default([]),
+  data:            z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve estar no formato YYYY-MM-DD'),
+  status:          z.string().max(30).optional().default('Publicada'),
+});
+
 /* ── Professores ─────────────────────────────────────────────────────────── */
 export const ProfessorCreateSchema = z.object({
   nome:     z.string().min(1).max(120).trim(),

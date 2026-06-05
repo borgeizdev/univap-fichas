@@ -11,6 +11,7 @@ import {
   GrupoUpdateSchema,
   DisciplinaSchema,
   AvaliacaoCreateSchema,
+  AvaliacaoUpdateSchema,
   ProfessorCreateSchema,
   ProfessorUpdateSchema,
 } from './schemas';
@@ -323,6 +324,47 @@ app.post('/api/avaliacoes', verifyToken, requireRole('professor'), async (req: R
     res.status(500).json({ error: (e as Error).message });
   } finally {
     client.release();
+  }
+});
+
+app.put('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req: Request, res: Response) => {
+  const body = validate(AvaliacaoUpdateSchema, req.body, res);
+  if (!body) return;
+  const client: PoolClient = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(
+      `UPDATE avaliacoes SET
+         grupo_nome=$1, criador_email=$2, professor_email=$3, professor_nome=$4,
+         disciplina=$5, nota=$6, anotacoes=$7, positivos=$8, melhorar=$9, data=$10, status=$11
+       WHERE id=$12`,
+      [body.grupoNome, body.criadorEmail ?? null, body.professorEmail, body.professorNome,
+       body.disciplina, body.nota ?? null, body.anotacoes, body.positivos, body.melhorar,
+       body.data, body.status, req.params.id]
+    );
+    await client.query('DELETE FROM integrantes_aval WHERE avaliacao_id=$1', [req.params.id]);
+    for (const m of body.integrantesAval) {
+      await client.query(
+        'INSERT INTO integrantes_aval (avaliacao_id, nome, matricula, nota, obs) VALUES ($1,$2,$3,$4,$5)',
+        [req.params.id, m.nome, m.matricula, m.nota ?? null, m.obs]
+      );
+    }
+    await client.query('COMMIT');
+    res.json({ ok: true });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: (e as Error).message });
+  } finally {
+    client.release();
+  }
+});
+
+app.delete('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req: Request, res: Response) => {
+  try {
+    await pool.query('DELETE FROM avaliacoes WHERE id=$1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
   }
 });
 
