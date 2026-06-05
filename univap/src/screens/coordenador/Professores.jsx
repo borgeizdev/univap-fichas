@@ -71,7 +71,7 @@ function CadastroProfessores() {
   useEffect(() => {
     Promise.all([apiGetProfs(), apiGetDiscs()])
       .then(([ps, ds]) => { setProfs(ps); setDiscs(ds.map(d => d.nome)); })
-      .catch(console.error);
+      .catch(e => toast(e.message || "Erro ao carregar dados.", "error"));
   }, []);
 
   const set   = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));

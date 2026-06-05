@@ -1,6 +1,7 @@
 /* Univap Fichas — Histórico de Avaliações (Aluno) */
 
 function HistoricoAvaliacoes({ user }) {
+  const toast = useToast();
   const [avaliacoes, setAvaliacoes] = useState([]);
   const [q,        setQ]       = useState("");
   const [filtDisc, setFiltDisc] = useState("");
@@ -10,7 +11,7 @@ function HistoricoAvaliacoes({ user }) {
   useEffect(() => {
     apiGetAvals()
       .then(avals => setAvaliacoes(avals.filter(a => a.criadorEmail === user.email)))
-      .catch(console.error);
+      .catch(e => toast(e.message || "Erro ao carregar avaliações.", "error"));
   }, [user.email]);
 
   const disciplinas = [...new Set(avaliacoes.map(a => a.disciplina))].sort();

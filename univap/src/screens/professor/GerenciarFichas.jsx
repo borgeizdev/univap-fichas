@@ -1,5 +1,6 @@
 /* Univap Fichas — Gerenciar Fichas */
 function GerenciarFichas({ user, onView }) {
+  const toast = useToast();
   const [todasAvals, setTodasAvals] = useState([]);
   const [grupos, setGrupos] = useState([]);
   const [q,        setQ]        = useState("");
@@ -12,7 +13,7 @@ function GerenciarFichas({ user, onView }) {
         setTodasAvals(avals.filter(a => a.professorEmail === user?.email));
         setGrupos(grps);
       })
-      .catch(console.error);
+      .catch(e => toast(e.message || "Erro ao carregar fichas.", "error"));
   }, [user?.email]);
 
   const disciplinas = [...new Set(todasAvals.map(a => a.disciplina))].sort();

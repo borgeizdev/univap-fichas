@@ -10,7 +10,9 @@ function CadastroMaterias() {
   const [editCurso, setEditCurso] = useState("");
 
   useEffect(() => {
-    apiGetDiscs().then(setMaterias).catch(console.error);
+    apiGetDiscs()
+      .then(setMaterias)
+      .catch(e => toast(e.message || "Erro ao carregar matérias.", "error"));
   }, []);
 
   const adicionar = async () => {

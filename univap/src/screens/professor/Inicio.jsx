@@ -21,6 +21,7 @@ function ListRow({ label, right, tone, onClick }) {
 }
 
 function ProfInicio({ user, go }) {
+  const toast = useToast();
   const [avaliacoes, setAvaliacoes] = useState([]);
   const [grupos, setGrupos] = useState([]);
 
@@ -30,7 +31,7 @@ function ProfInicio({ user, go }) {
         setAvaliacoes(avals.filter(a => a.professorEmail === user.email));
         setGrupos(grps);
       })
-      .catch(console.error);
+      .catch(e => toast(e.message || "Erro ao carregar dados.", "error"));
   }, [user.email]);
 
   const avaliados = new Set(avaliacoes.map(a => a.grupoNome));

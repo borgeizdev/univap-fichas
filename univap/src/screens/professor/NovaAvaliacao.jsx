@@ -1,6 +1,7 @@
 /* Univap Fichas — Nova Ficha (Professor) */
 
 function NovaAvaliacao({ user }) {
+  const toast = useToast();
   const [grupos, setGrupos] = useState([]);
   const [avaliacoes, setAvaliacoes] = useState([]);
   const [selecionado, setSelecionado] = useState(null);
@@ -8,7 +9,7 @@ function NovaAvaliacao({ user }) {
   useEffect(() => {
     Promise.all([apiGetGrupos(), apiGetAvals()])
       .then(([gs, avals]) => { setGrupos(gs); setAvaliacoes(avals); })
-      .catch(console.error);
+      .catch(e => toast(e.message || "Erro ao carregar grupos.", "error"));
   }, []);
 
   if (selecionado) {
@@ -75,7 +76,7 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
   useEffect(() => {
     apiGetDiscs()
       .then(discs => setDisciplinas(discs.map(d => d.nome)))
-      .catch(console.error);
+      .catch(e => toast(e.message || "Erro ao carregar disciplinas.", "error"));
   }, []);
 
   const profMaterias = user.materias?.length > 0 ? user.materias : null;

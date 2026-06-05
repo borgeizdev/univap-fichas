@@ -10,13 +10,14 @@ function StatCard({ icon, label, value, tone = "blue", delta }) {
 }
 
 function Dashboard({ onView }) {
+  const toast = useToast();
   const [avaliacoes, setAvaliacoes] = useState([]);
   const [grupos, setGrupos] = useState([]);
 
   useEffect(() => {
     Promise.all([apiGetAvals(), apiGetGrupos()])
       .then(([avals, grps]) => { setAvaliacoes(avals); setGrupos(grps); })
-      .catch(console.error);
+      .catch(e => toast(e.message || "Erro ao carregar dashboard.", "error"));
   }, []);
 
   const total    = avaliacoes.length;

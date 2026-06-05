@@ -49,8 +49,10 @@ const apiUpdateDisc = (id, d)  => _put("/disciplinas/" + id, d);
 const apiDeleteDisc = (id)     => _del("/disciplinas/" + id);
 
 /* Avaliações */
-const apiGetAvals   = ()  => _get("/avaliacoes");
-const apiCreateAval = (a) => _post("/avaliacoes", a);
+const apiGetAvals   = ()       => _get("/avaliacoes");
+const apiCreateAval = (a)      => _post("/avaliacoes", a);
+const apiUpdateAval = (id, a)  => _put("/avaliacoes/" + id, a);
+const apiDeleteAval = (id)     => _del("/avaliacoes/" + id);
 
 /* Professores */
 const apiGetProfs   = ()       => _get("/professores");

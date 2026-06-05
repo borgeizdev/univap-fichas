@@ -7,7 +7,9 @@ function MeuGrupo({ user }) {
   const [grupoAtivo, setGrupoAtivo] = useState(null);
 
   useEffect(() => {
-    apiGetGrupos().then(setGrupos).catch(console.error);
+    apiGetGrupos()
+      .then(setGrupos)
+      .catch(e => toast(e.message || "Erro ao carregar grupos.", "error"));
   }, []);
 
   const onCriar = async (novoGrupo) => {
@@ -119,7 +121,9 @@ function CriarGrupoForm({ user, grupos, onSalvar, onCancelar }) {
   const [disciplinas, setDisciplinas] = useState([]);
 
   useEffect(() => {
-    apiGetDiscs().then(setDisciplinas).catch(console.error);
+    apiGetDiscs()
+      .then(setDisciplinas)
+      .catch(e => toast(e.message || "Erro ao carregar disciplinas.", "error"));
   }, []);
 
   const setCurso = (curso) => setF(s => ({ ...s, curso, turma: "", materia: "" }));
