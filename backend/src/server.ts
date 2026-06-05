@@ -3,6 +3,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import { Pool, PoolClient } from 'pg';
+import { signToken, verifyToken, requireRole } from './middleware/auth';
 import {
   validate,
   LoginSchema,
@@ -63,6 +64,8 @@ interface AvaliacaoRow {
   integrantes_aval: { nome: string; matricula: string; nota: string | null; obs: string }[];
 }
 
+type PgError = Error & { code?: string };
+
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 const fmtUsuario = (row: UsuarioRow) => ({
   id:       row.id,
@@ -72,7 +75,9 @@ const fmtUsuario = (row: UsuarioRow) => ({
   materias: row.materias || [],
 });
 
-type PgError = Error & { code?: string };
+/* ══════════════════════════════════════════════════════════════════════════
+   PUBLIC ROUTES  (sem token)
+══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Auth ────────────────────────────────────────────────────────────────── */
 app.post('/api/auth/login', async (req: Request, res: Response) => {
@@ -86,14 +91,19 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     const u = rows[0];
     const ok = await bcrypt.compare(body.senha, u.senha);
     if (!ok) return res.status(401).json({ error: 'Credenciais inválidas.' });
-    res.json(fmtUsuario(u));
+    const token = signToken({ id: u.id, email: u.email, role: u.role, nome: u.nome });
+    res.json({ ...fmtUsuario(u), token });
   } catch (e) {
     res.status(500).json({ error: (e as Error).message });
   }
 });
 
-/* ── Grupos ──────────────────────────────────────────────────────────────── */
-app.get('/api/grupos', async (_req: Request, res: Response) => {
+/* ══════════════════════════════════════════════════════════════════════════
+   PROTECTED ROUTES  (verifyToken em todas abaixo)
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Grupos  (GET: qualquer role | POST/PUT/DELETE: aluno) ───────────────── */
+app.get('/api/grupos', verifyToken, async (_req: Request, res: Response) => {
   try {
     const { rows } = await pool.query<GrupoRow>(`
       SELECT g.*,
@@ -127,7 +137,7 @@ app.get('/api/grupos', async (_req: Request, res: Response) => {
   }
 });
 
-app.post('/api/grupos', async (req: Request, res: Response) => {
+app.post('/api/grupos', verifyToken, requireRole('aluno'), async (req: Request, res: Response) => {
   const body = validate(GrupoCreateSchema, req.body, res);
   if (!body) return;
   const client: PoolClient = await pool.connect();
@@ -153,7 +163,7 @@ app.post('/api/grupos', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/grupos/:id', async (req: Request, res: Response) => {
+app.put('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Request, res: Response) => {
   const body = validate(GrupoUpdateSchema, req.body, res);
   if (!body) return;
   const client: PoolClient = await pool.connect();
@@ -180,7 +190,7 @@ app.put('/api/grupos/:id', async (req: Request, res: Response) => {
   }
 });
 
-app.delete('/api/grupos/:id', async (req: Request, res: Response) => {
+app.delete('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Request, res: Response) => {
   try {
     await pool.query('DELETE FROM grupos WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
@@ -189,8 +199,8 @@ app.delete('/api/grupos/:id', async (req: Request, res: Response) => {
   }
 });
 
-/* ── Disciplinas ─────────────────────────────────────────────────────────── */
-app.get('/api/disciplinas', async (_req: Request, res: Response) => {
+/* ── Disciplinas  (GET: qualquer role | POST/PUT/DELETE: coordenador) ─────── */
+app.get('/api/disciplinas', verifyToken, async (_req: Request, res: Response) => {
   try {
     const { rows } = await pool.query('SELECT * FROM disciplinas ORDER BY curso, nome');
     res.json(rows);
@@ -199,7 +209,7 @@ app.get('/api/disciplinas', async (_req: Request, res: Response) => {
   }
 });
 
-app.post('/api/disciplinas', async (req: Request, res: Response) => {
+app.post('/api/disciplinas', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
   const body = validate(DisciplinaSchema, req.body, res);
   if (!body) return;
   try {
@@ -215,7 +225,7 @@ app.post('/api/disciplinas', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/disciplinas/:id', async (req: Request, res: Response) => {
+app.put('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
   const body = validate(DisciplinaSchema, req.body, res);
   if (!body) return;
   try {
@@ -228,7 +238,7 @@ app.put('/api/disciplinas/:id', async (req: Request, res: Response) => {
   }
 });
 
-app.delete('/api/disciplinas/:id', async (req: Request, res: Response) => {
+app.delete('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
   try {
     await pool.query('DELETE FROM disciplinas WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
@@ -237,8 +247,8 @@ app.delete('/api/disciplinas/:id', async (req: Request, res: Response) => {
   }
 });
 
-/* ── Avaliações ──────────────────────────────────────────────────────────── */
-app.get('/api/avaliacoes', async (_req: Request, res: Response) => {
+/* ── Avaliações  (GET: qualquer role | POST: professor) ──────────────────── */
+app.get('/api/avaliacoes', verifyToken, async (_req: Request, res: Response) => {
   try {
     const { rows } = await pool.query<AvaliacaoRow>(`
       SELECT a.*,
@@ -285,7 +295,7 @@ app.get('/api/avaliacoes', async (_req: Request, res: Response) => {
   }
 });
 
-app.post('/api/avaliacoes', async (req: Request, res: Response) => {
+app.post('/api/avaliacoes', verifyToken, requireRole('professor'), async (req: Request, res: Response) => {
   const body = validate(AvaliacaoCreateSchema, req.body, res);
   if (!body) return;
   const client: PoolClient = await pool.connect();
@@ -316,8 +326,8 @@ app.post('/api/avaliacoes', async (req: Request, res: Response) => {
   }
 });
 
-/* ── Professores ─────────────────────────────────────────────────────────── */
-app.get('/api/professores', async (_req: Request, res: Response) => {
+/* ── Professores  (GET: coordenador | POST/PUT/DELETE: coordenador) ──────── */
+app.get('/api/professores', verifyToken, requireRole('coordenador'), async (_req: Request, res: Response) => {
   try {
     const { rows } = await pool.query<UsuarioRow>(
       "SELECT id, email, nome, materias FROM usuarios WHERE role='professor' ORDER BY nome"
@@ -328,7 +338,7 @@ app.get('/api/professores', async (_req: Request, res: Response) => {
   }
 });
 
-app.post('/api/professores', async (req: Request, res: Response) => {
+app.post('/api/professores', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
   const body = validate(ProfessorCreateSchema, req.body, res);
   if (!body) return;
   try {
@@ -345,7 +355,7 @@ app.post('/api/professores', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/api/professores/:id', async (req: Request, res: Response) => {
+app.put('/api/professores/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
   const body = validate(ProfessorUpdateSchema, req.body, res);
   if (!body) return;
   try {
@@ -369,7 +379,7 @@ app.put('/api/professores/:id', async (req: Request, res: Response) => {
   }
 });
 
-app.delete('/api/professores/:id', async (req: Request, res: Response) => {
+app.delete('/api/professores/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
   try {
     await pool.query('DELETE FROM usuarios WHERE id=$1', [req.params.id]);
     res.json({ ok: true });

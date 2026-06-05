@@ -47,7 +47,7 @@ function App() {
       : "grupo";
     setView(defaultView);
   };
-  const logout = () => { setAuth(null); setView("grupo"); };
+  const logout = () => { apiLogout(); setAuth(null); setView("grupo"); };
 
   const crumbsFor = (v) => {
     const map = {
