@@ -22,10 +22,10 @@ async function seed() {
   const alunoHash = await bcrypt.hash(alunoSenha, 10);
 
   await pool.query(`
-    INSERT INTO usuarios (email, senha, nome, role) VALUES
-      ('coord@univap.com', $1, 'Coord. Técnico',  'coordenador'),
-      ('gui@univap.com',   $2, 'Guilherme Souza', 'aluno')
-    ON CONFLICT (email) DO NOTHING
+    INSERT INTO usuarios (email, senha, nome, role, matricula) VALUES
+      ('coord@univap.com', $1, 'Coord. Técnico',  'coordenador', NULL),
+      ('gui@univap.com',   $2, 'Guilherme Souza', 'aluno',       '50240001')
+    ON CONFLICT (email) DO UPDATE SET matricula = EXCLUDED.matricula
   `, [coordHash, alunoHash]);
 
   console.log('Seed concluído! Usuários padrão criados.');

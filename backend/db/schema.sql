@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
   senha    TEXT NOT NULL,
   nome     TEXT NOT NULL,
   role     TEXT NOT NULL CHECK (role IN ('coordenador', 'professor', 'aluno')),
-  materias TEXT[] DEFAULT '{}'
+  materias  TEXT[] DEFAULT '{}',
+  matricula TEXT
 );
 
 CREATE TABLE IF NOT EXISTS disciplinas (

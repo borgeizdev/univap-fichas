@@ -30,12 +30,13 @@ const pool = new Pool({
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 interface UsuarioRow {
-  id:       number;
-  email:    string;
-  senha:    string;
-  nome:     string;
-  role:     'coordenador' | 'professor' | 'aluno';
-  materias: string[];
+  id:        number;
+  email:     string;
+  senha:     string;
+  nome:      string;
+  role:      'coordenador' | 'professor' | 'aluno';
+  materias:  string[];
+  matricula: string | null;
 }
 
 interface GrupoRow {
@@ -69,11 +70,12 @@ type PgError = Error & { code?: string };
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 const fmtUsuario = (row: UsuarioRow) => ({
-  id:       row.id,
-  email:    row.email,
-  nome:     row.nome,
-  role:     row.role,
-  materias: row.materias || [],
+  id:        row.id,
+  email:     row.email,
+  nome:      row.nome,
+  role:      row.role,
+  materias:  row.materias || [],
+  matricula: row.matricula || null,
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -92,7 +94,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     const u = rows[0];
     const ok = await bcrypt.compare(body.senha, u.senha);
     if (!ok) return res.status(401).json({ error: 'Credenciais inválidas.' });
-    const token = signToken({ id: u.id, email: u.email, role: u.role, nome: u.nome });
+    const token = signToken({ id: u.id, email: u.email, role: u.role, nome: u.nome, matricula: u.matricula || null });
     res.json({ ...fmtUsuario(u), token });
   } catch (e) {
     res.status(500).json({ error: (e as Error).message });
