@@ -39,12 +39,16 @@ function App() {
 
   useEffect(() => {
     const r = document.documentElement;
+    r.classList.add('uv-no-transition');
     r.setAttribute("data-theme", dark ? "dark" : "light");
     r.style.setProperty("--uv-primary", t.accent);
     r.style.setProperty("--uv-primary-dark", shade(t.accent, -0.18));
     r.style.setProperty("--uv-font", FONT_STACKS[t.font] || FONT_STACKS["Plus Jakarta Sans"]);
     r.style.setProperty("--uv-card-radius", (t.cardRadius || 16) + "px");
+    requestAnimationFrame(() => r.classList.remove('uv-no-transition'));
   }, [dark, t.accent, t.font, t.cardRadius]);
+
+  const toggleTheme = () => setDark(d => !d);
 
   const login = (role, email, nome, materias, matricula, trocar_senha) => {
     setAuth({ role, email, nome, materias: materias || [], matricula: matricula || null, trocar_senha: !!trocar_senha });
@@ -79,11 +83,11 @@ function App() {
   );
 
   if (!auth) {
-    return (<><Login onLogin={login} dark={dark} onToggleTheme={() => setDark(d => !d)} />{panel}</>);
+    return (<><Login onLogin={login} dark={dark} onToggleTheme={toggleTheme} />{panel}</>);
   }
 
   if (auth.trocar_senha) {
-    return (<><TrocarSenha dark={dark} onToggleTheme={() => setDark(d => !d)}
+    return (<><TrocarSenha dark={dark} onToggleTheme={toggleTheme}
       onConcluido={() => setAuth(a => ({ ...a, trocar_senha: false }))} />{panel}</>);
   }
 
