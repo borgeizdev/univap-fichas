@@ -331,8 +331,16 @@ app.delete('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), asyn
 /* ── Avaliações  (GET: qualquer role | POST: professor) ──────────────────── */
 app.get('/api/avaliacoes', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   const { professor, disciplina, de, ate } = req.query as Record<string, string | undefined>;
-  const params: (string)[] = [];
+  const { role, matricula } = req.user!;
+  const isAluno = role === 'aluno';
+
+  const params: string[] = [];
   const conditions: string[] = [];
+
+  if (isAluno) {
+    params.push(matricula ?? '');
+    conditions.push(`EXISTS (SELECT 1 FROM integrantes_aval ia2 WHERE ia2.avaliacao_id = a.id AND ia2.matricula = $${params.length})`);
+  }
 
   if (professor)   { params.push(professor);   conditions.push(`a.professor_email = $${params.length}`); }
   if (disciplina)  { params.push(disciplina);  conditions.push(`a.disciplina = $${params.length}`); }
