@@ -98,7 +98,7 @@ function FormAvaliacao({ grupo, user, onVoltar }) {
     setSaving(true);
     try {
       await apiCreateAval({
-        id: "aval_" + Date.now(),
+        id: crypto.randomUUID(),
         grupoNome: grupo.nome,
         criadorEmail: grupo.criadorEmail || "",
         professorEmail: user.email,
