@@ -17,6 +17,8 @@ Sistema de avaliação acadêmica desenvolvido como projeto escolar para o Colé
 - JWT — autenticação com token de 1 dia
 - Zod — validação de entrada em todas as rotas
 - bcrypt — hash de senhas
+- express-rate-limit — proteção contra força bruta no login
+- exceljs — geração de planilhas (futuro)
 - ts-node-dev — hot reload em desenvolvimento
 
 ---
@@ -56,13 +58,16 @@ DB_USER=postgres
 DB_PASS=sua_senha_do_postgres
 
 JWT_SECRET=uma_chave_secreta_longa_e_aleatoria
-
+FRONTEND_URL=http://localhost:3000
 PORT=3001
 
 SEED_COORD_PASS=senha_do_coordenador
-SEED_ALUNO_PASS=senha_do_aluno_gui
-SEED_MATEUS_PASS=senha_do_aluno_mateus
+SEED_GUI_NASC=senha_inicial_gui
+SEED_MATEUS_NASC=senha_inicial_mateus
+SEED_MIGUEL_NASC=senha_inicial_miguel
 ```
+
+> As variáveis `SEED_*` só são necessárias para rodar `npm run seed`. Após popular o banco, podem ser removidas.
 
 ### 4. Crie o banco de dados
 
@@ -72,15 +77,11 @@ Crie o banco e rode o schema via Node.js (não exige psql no PATH):
 # Criar o banco
 node -e "require('dotenv').config(); const {Pool}=require('pg'); const p=new Pool({host:process.env.DB_HOST,port:process.env.DB_PORT,user:process.env.DB_USER,password:process.env.DB_PASS}); p.query('CREATE DATABASE univap_fichas').then(()=>{console.log('Banco criado!');p.end()}).catch(e=>{console.error(e.message);p.end()})"
 
-# Rodar o schema (criar as tabelas)
+# Criar as tabelas
 node -e "require('dotenv').config(); const {Pool}=require('pg'); const fs=require('fs'); const p=new Pool({host:process.env.DB_HOST,port:process.env.DB_PORT,database:process.env.DB_NAME,user:process.env.DB_USER,password:process.env.DB_PASS}); p.query(fs.readFileSync('db/schema.sql','utf8')).then(()=>{console.log('Tabelas criadas!');p.end()}).catch(e=>{console.error(e.message);p.end()})"
 ```
 
-> Se já tiver o `psql` no PATH, pode usar:
-> ```bash
-> psql -U postgres -c "CREATE DATABASE univap_fichas;"
-> psql -U postgres -d univap_fichas -f backend/db/schema.sql
-> ```
+> Se tiver `psql` no PATH: `psql -U postgres -c "CREATE DATABASE univap_fichas;"` e `psql -U postgres -d univap_fichas -f db/schema.sql`
 
 ### 5. Popule o banco com os usuários iniciais
 
@@ -110,13 +111,14 @@ O sistema ficará disponível em `http://localhost:3000`.
 
 ## Contas de acesso
 
-As senhas são as que você definiu no `.env`.
+As senhas dos alunos são os valores definidos nas variáveis `SEED_*` do `.env`. No primeiro acesso, o sistema obriga a trocar a senha.
 
-| Perfil      | E-mail               | Matrícula |
+| Perfil      | Login                | Matrícula |
 |-------------|----------------------|-----------|
-| Coordenador | coord@univap.com     | —         |
-| Aluno       | gui@univap.com       | 50240001  |
-| Aluno       | mateus@univap.com    | 50240609  |
+| Coordenador | `coord@univap.com`   | —         |
+| Guilherme   | matrícula `50240609` | 50240609  |
+| Mateus      | matrícula `50240363` | 50240363  |
+| Miguel      | matrícula `50240397` | 50240397  |
 | Professor   | criado pelo coordenador | —      |
 
 ---
@@ -130,6 +132,7 @@ As senhas são as que você definiu no `.env`.
 
 2. Login como Aluno
    → Criar grupo → escolher matéria → adicionar integrantes
+   (um aluno não pode estar em dois grupos da mesma matéria)
 
 3. Login como Professor
    → Nova Ficha → selecionar grupo → preencher avaliação → publicar
@@ -171,7 +174,7 @@ univap-fichas/
 │   │       └── auth.ts        # JWT: signToken, verifyToken, requireRole
 │   ├── db/
 │   │   ├── schema.sql         # Criação das tabelas
-│   │   └── seed.js            # Usuários iniciais
+│   │   └── seed.ts            # Usuários iniciais
 │   ├── .env                   # Credenciais locais (não versionado)
 │   └── package.json
 └── univap/
@@ -183,7 +186,7 @@ univap-fichas/
         ├── data/
         │   ├── api.js         # Cliente HTTP (fetch + JWT)
         │   ├── mock.js        # Enums: cursos, anos, turmas
-        │   └── store.js       # Utilitários compartilhados (fmtDataBR)
+        │   └── store.js       # Utilitários compartilhados
         ├── components/
         │   ├── UI.jsx         # Componentes reutilizáveis
         │   ├── Layout.jsx     # AppShell, Sidebar, Header
@@ -191,6 +194,7 @@ univap-fichas/
         │   └── TweaksPanel.jsx
         └── screens/
             ├── Login.jsx
+            ├── TrocarSenha.jsx
             ├── Misc.jsx
             ├── professor/
             ├── aluno/
@@ -205,6 +209,10 @@ univap-fichas/
 - Autenticação via JWT com expiração de 1 dia
 - Todas as rotas protegidas por `verifyToken`
 - Rotas de escrita verificam role e dono do recurso
+- CORS restrito a origens `localhost`
+- Rate limiting no login: 10 tentativas por IP a cada 15 minutos
+- Variáveis de ambiente obrigatórias validadas no startup
+- Erros internos centralizados em middleware global
 - Credenciais nunca versionadas (`.env` no `.gitignore`)
 
 ---
