@@ -11,7 +11,7 @@ function Login({ onLogin, dark, onToggleTheme }) {
     setLoading(true);
     try {
       const user = await apiLogin(login.trim(), senha);
-      onLogin(user.role, user.email, user.nome, user.materias, user.matricula);
+      onLogin(user.role, user.email, user.nome, user.materias, user.matricula, user.trocar_senha);
     } catch (err) {
       setError(err.message || "Credenciais inválidas.");
     } finally {

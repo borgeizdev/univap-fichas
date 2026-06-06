@@ -46,8 +46,8 @@ function App() {
     r.style.setProperty("--uv-card-radius", (t.cardRadius || 16) + "px");
   }, [dark, t.accent, t.font, t.cardRadius]);
 
-  const login = (role, email, nome, materias, matricula) => {
-    setAuth({ role, email, nome, materias: materias || [], matricula: matricula || null });
+  const login = (role, email, nome, materias, matricula, trocar_senha) => {
+    setAuth({ role, email, nome, materias: materias || [], matricula: matricula || null, trocar_senha: !!trocar_senha });
     const defaultView = role === "professor" ? "inicio"
       : role === "coordenador" ? "materias"
       : "grupo";
@@ -80,6 +80,11 @@ function App() {
 
   if (!auth) {
     return (<><Login onLogin={login} dark={dark} onToggleTheme={() => setDark(d => !d)} />{panel}</>);
+  }
+
+  if (auth.trocar_senha) {
+    return (<><TrocarSenha dark={dark} onToggleTheme={() => setDark(d => !d)}
+      onConcluido={() => setAuth(a => ({ ...a, trocar_senha: false }))} />{panel}</>);
   }
 
   const renderScreen = () => {

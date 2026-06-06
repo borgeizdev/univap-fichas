@@ -36,6 +36,7 @@ const apiLogin = async (login, senha) => {
   return data;
 };
 const apiLogout = () => localStorage.removeItem(TOKEN_KEY);
+const apiTrocarSenha = (novaSenha) => _put("/auth/trocar-senha", { novaSenha });
 
 /* Grupos */
 const apiGetGrupos   = ()       => _get("/grupos");

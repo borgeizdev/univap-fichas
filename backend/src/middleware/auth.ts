@@ -9,11 +9,12 @@ const JWT_SECRET: string = (() => {
 export const JWT_EXPIRES = '1d';
 
 export interface JWTPayload {
-  id:        number;
-  email:     string;
-  role:      'coordenador' | 'professor' | 'aluno';
-  nome:      string;
-  matricula: string | null;
+  id:           number;
+  email:        string;
+  role:         'coordenador' | 'professor' | 'aluno';
+  nome:         string;
+  matricula:    string | null;
+  trocar_senha: boolean;
 }
 
 declare global {

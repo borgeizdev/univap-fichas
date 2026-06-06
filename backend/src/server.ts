@@ -30,13 +30,14 @@ const pool = new Pool({
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
 interface UsuarioRow {
-  id:        number;
-  email:     string;
-  senha:     string;
-  nome:      string;
-  role:      'coordenador' | 'professor' | 'aluno';
-  materias:  string[];
-  matricula: string | null;
+  id:           number;
+  email:        string;
+  senha:        string;
+  nome:         string;
+  role:         'coordenador' | 'professor' | 'aluno';
+  materias:     string[];
+  matricula:    string | null;
+  trocar_senha: boolean;
 }
 
 interface GrupoRow {
@@ -70,12 +71,13 @@ type PgError = Error & { code?: string };
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 const fmtUsuario = (row: UsuarioRow) => ({
-  id:        row.id,
-  email:     row.email,
-  nome:      row.nome,
-  role:      row.role,
-  materias:  row.materias || [],
-  matricula: row.matricula || null,
+  id:           row.id,
+  email:        row.email,
+  nome:         row.nome,
+  role:         row.role,
+  materias:     row.materias || [],
+  matricula:    row.matricula || null,
+  trocar_senha: row.trocar_senha ?? false,
 });
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -98,8 +100,25 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     const u = rows[0];
     const ok = await bcrypt.compare(body.senha, u.senha);
     if (!ok) return res.status(401).json({ error: 'Credenciais inválidas.' });
-    const token = signToken({ id: u.id, email: u.email, role: u.role, nome: u.nome, matricula: u.matricula || null });
+    const token = signToken({ id: u.id, email: u.email, role: u.role, nome: u.nome, matricula: u.matricula || null, trocar_senha: u.trocar_senha ?? false });
     res.json({ ...fmtUsuario(u), token });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+app.put('/api/auth/trocar-senha', verifyToken, async (req: Request, res: Response) => {
+  const { novaSenha } = req.body;
+  if (!novaSenha || typeof novaSenha !== 'string' || novaSenha.length < 6) {
+    return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres.' });
+  }
+  try {
+    const hash = await bcrypt.hash(novaSenha, 10);
+    await pool.query(
+      'UPDATE usuarios SET senha = $1, trocar_senha = FALSE WHERE id = $2',
+      [hash, req.user!.id]
+    );
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: (e as Error).message });
   }
