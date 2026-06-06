@@ -38,6 +38,9 @@ const apiLogin = async (login, senha) => {
 const apiLogout = () => localStorage.removeItem(TOKEN_KEY);
 const apiTrocarSenha = (novaSenha) => _put("/auth/trocar-senha", { novaSenha });
 
+/* Alunos */
+const apiBuscarAluno = (matricula) => _get('/alunos/buscar?matricula=' + encodeURIComponent(matricula));
+
 /* Grupos */
 const apiGetGrupos   = ()       => _get("/grupos");
 const apiCreateGrupo = (g)      => _post("/grupos", g);

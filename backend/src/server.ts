@@ -162,6 +162,22 @@ app.get('/api/me', verifyToken, async (req: Request, res: Response, next: NextFu
   }
 });
 
+/* ── Buscar aluno por matrícula ──────────────────────────────────────────── */
+app.get('/api/alunos/buscar', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
+  const { matricula } = req.query as { matricula?: string };
+  if (!matricula?.trim()) return res.status(400).json({ error: 'Informe a matrícula.' });
+  try {
+    const { rows } = await pool.query<{ nome: string }>(
+      "SELECT nome FROM usuarios WHERE matricula = $1 AND role = 'aluno'",
+      [matricula.trim()]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Aluno não encontrado.' });
+    res.json({ nome: rows[0].nome });
+  } catch (e) {
+    next(e);
+  }
+});
+
 /* ── Grupos  (GET: qualquer role | POST/PUT/DELETE: aluno) ───────────────── */
 app.get('/api/grupos', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   const { role, email, matricula } = req.user!;

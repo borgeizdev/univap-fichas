@@ -205,7 +205,24 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
   const toast = useToast();
   const [novoNome, setNovoNome] = useState("");
   const [novaMatricula, setNovaMatricula] = useState("");
+  const [buscando, setBuscando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
+
+  useEffect(() => {
+    if (novaMatricula.length < 4) return;
+    const timer = setTimeout(async () => {
+      setBuscando(true);
+      try {
+        const res = await apiBuscarAluno(novaMatricula);
+        setNovoNome(res.nome);
+      } catch (_) {
+        /* não encontrado — deixa o campo livre para digitação manual */
+      } finally {
+        setBuscando(false);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [novaMatricula]);
 
   const adicionar = () => {
     if (!novoNome.trim() || !novaMatricula.trim()) {
@@ -307,13 +324,13 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
         <div className="uv-add-member">
           <p className="uv-add-member-title">Adicionar Integrante</p>
           <div className="uv-add-member-row">
-            <Field label="Nome">
-              <Input placeholder="Nome completo" value={novoNome}
-                onChange={(e) => setNovoNome(e.target.value)} />
-            </Field>
             <Field label="Matrícula">
-              <Input placeholder="Ex: 2026-0001" value={novaMatricula}
-                onChange={(e) => setNovaMatricula(e.target.value)} />
+              <Input placeholder="Matrícula" value={novaMatricula}
+                onChange={(e) => { setNovaMatricula(e.target.value); setNovoNome(""); }} />
+            </Field>
+            <Field label="Nome">
+              <Input placeholder={buscando ? "Buscando…" : "Nome completo"} value={novoNome}
+                onChange={(e) => setNovoNome(e.target.value)} readOnly={buscando} />
             </Field>
             <div className="uv-add-member-btn">
               <Button icon="plus" onClick={adicionar}>Adicionar</Button>
