@@ -7,134 +7,121 @@ Sistema de avaliação acadêmica desenvolvido como projeto escolar para o Colé
 ## Tecnologias
 
 **Frontend**
-- **React 18** (via CDN — sem bundler/build tool)
-- **Babel Standalone** — transpila JSX diretamente no browser
-- **CSS puro** — estilização sem frameworks externos
-- **Google Fonts** — Roboto, Figtree, Manrope, Plus Jakarta Sans
+- React 18 (via CDN — sem bundler)
+- Babel Standalone — transpila JSX no browser
+- CSS puro — sem frameworks externos
 
 **Backend**
-- **Node.js + Express** — API REST
-- **PostgreSQL** — banco de dados relacional
-- **bcrypt** — hash de senhas
-- **pg** — driver PostgreSQL para Node.js
+- Node.js + Express + TypeScript
+- PostgreSQL — banco de dados relacional
+- JWT — autenticação com token de 1 dia
+- Zod — validação de entrada em todas as rotas
+- bcrypt — hash de senhas
+- ts-node-dev — hot reload em desenvolvimento
 
 ---
 
-## Como rodar
+## Pré-requisitos
 
-### 1. Banco de dados
+- Node.js 18+
+- PostgreSQL instalado e rodando localmente
 
-Crie o banco e rode o schema:
+---
+
+## Instalação
+
+### 1. Clone o repositório
 
 ```bash
-psql -U postgres -c "CREATE DATABASE univap_fichas;"
-psql -U postgres -d univap_fichas -f backend/db/schema.sql
+git clone https://github.com/borgeizdev/univap-fichas.git
+cd univap-fichas
 ```
 
-### 2. Backend
+### 2. Instale as dependências do backend
 
 ```bash
 cd backend
 npm install
-node db/seed.js   # cria os usuários padrão (só na primeira vez)
-node server.js    # inicia a API em http://localhost:3001
 ```
 
-Configure as variáveis de ambiente em `backend/.env` (baseie-se em `.env.example`):
+### 3. Configure as variáveis de ambiente
+
+Crie o arquivo `backend/.env` com o seguinte conteúdo:
 
 ```env
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=univap_fichas
 DB_USER=postgres
-DB_PASS="sua_senha"
+DB_PASS=sua_senha_do_postgres
+
+JWT_SECRET=uma_chave_secreta_longa_e_aleatoria
+
 PORT=3001
+
+SEED_COORD_PASS=senha_do_coordenador
+SEED_ALUNO_PASS=senha_do_aluno_gui
+SEED_MATEUS_PASS=senha_do_aluno_mateus
 ```
 
-### 3. Frontend
+### 4. Crie o banco de dados
 
-Com o servidor rodando, abra `univap/index.html` no navegador.
+Crie o banco e rode o schema via Node.js (não exige psql no PATH):
 
-> **Dica:** Use a extensão **Live Server** no VS Code para evitar problemas com CORS ao carregar os arquivos `.jsx`.
+```bash
+# Criar o banco
+node -e "require('dotenv').config(); const {Pool}=require('pg'); const p=new Pool({host:process.env.DB_HOST,port:process.env.DB_PORT,user:process.env.DB_USER,password:process.env.DB_PASS}); p.query('CREATE DATABASE univap_fichas').then(()=>{console.log('Banco criado!');p.end()}).catch(e=>{console.error(e.message);p.end()})"
+
+# Rodar o schema (criar as tabelas)
+node -e "require('dotenv').config(); const {Pool}=require('pg'); const fs=require('fs'); const p=new Pool({host:process.env.DB_HOST,port:process.env.DB_PORT,database:process.env.DB_NAME,user:process.env.DB_USER,password:process.env.DB_PASS}); p.query(fs.readFileSync('db/schema.sql','utf8')).then(()=>{console.log('Tabelas criadas!');p.end()}).catch(e=>{console.error(e.message);p.end()})"
+```
+
+> Se já tiver o `psql` no PATH, pode usar:
+> ```bash
+> psql -U postgres -c "CREATE DATABASE univap_fichas;"
+> psql -U postgres -d univap_fichas -f backend/db/schema.sql
+> ```
+
+### 5. Popule o banco com os usuários iniciais
+
+```bash
+npm run seed
+```
+
+### 6. Inicie o backend
+
+```bash
+npm run dev
+```
+
+A API ficará disponível em `http://localhost:3001`.
+
+### 7. Inicie o frontend
+
+Em outro terminal, a partir da raiz do projeto:
+
+```bash
+npx serve univap
+```
+
+O sistema ficará disponível em `http://localhost:3000`.
 
 ---
 
 ## Contas de acesso
 
-| Perfil       | E-mail                  | Senha                |
-|--------------|-------------------------|----------------------|
-| Coordenador  | coord@univap.com        | 123coord             |
-| Aluno        | gui@univap.com          | 123aluno             |
-| Professor    | criado pelo coordenador | definida no cadastro |
+As senhas são as que você definiu no `.env`.
+
+| Perfil      | E-mail               | Matrícula |
+|-------------|----------------------|-----------|
+| Coordenador | coord@univap.com     | —         |
+| Aluno       | gui@univap.com       | 50240001  |
+| Aluno       | mateus@univap.com    | 50240609  |
+| Professor   | criado pelo coordenador | —      |
 
 ---
 
-## Funcionalidades por perfil
-
-### Coordenador
-- Cadastrar e gerenciar **matérias**
-- Cadastrar e gerenciar **professores**, atribuindo matérias a cada um
-
-### Aluno
-- Criar e gerenciar **grupos** (com nome, curso, ano, turma e matéria)
-- Adicionar integrantes ao grupo (nome + matrícula, com opção de marcar o líder)
-- Visualizar o **histórico de avaliações** recebidas pelo grupo
-
-### Professor
-- Visualizar painel inicial com estatísticas e grupos pendentes
-- Criar **fichas de avaliação** para grupos: nota, pontos positivos, pontos a melhorar e anotações
-- Gerenciar fichas criadas com filtros por disciplina e status
-- Acessar **dashboard** com gráficos e resumo de avaliações
-
----
-
-## Estrutura de pastas
-
-```
-univap-fichas/
-├── backend/
-│   ├── server.js                     # API REST (Express)
-│   ├── .env.example                  # Modelo de configuração
-│   ├── package.json
-│   └── db/
-│       ├── schema.sql                # Criação das tabelas
-│       └── seed.js                   # Usuários iniciais
-└── univap/
-    ├── index.html                    # Entry point — carrega todos os scripts em ordem
-    ├── assets/
-    │   └── images/
-    ├── styles/
-    │   └── main.css                  # Estilos globais
-    └── src/
-        ├── App.jsx                   # Raiz da aplicação — autenticação e roteamento
-        ├── components/
-        │   ├── Icon.jsx
-        │   ├── UI.jsx                # Componentes reutilizáveis (Button, Card, Badge…)
-        │   ├── Layout.jsx            # AppShell, Sidebar e Header
-        │   └── TweaksPanel.jsx       # Painel de personalização visual
-        ├── data/
-        │   ├── mock.js               # Enums: cursos, anos, turmas, bimestres
-        │   ├── store.js              # Utilitários compartilhados (fmtDataBR)
-        │   └── api.js                # Cliente de API (fetch para o backend)
-        └── screens/
-            ├── Login.jsx
-            ├── Misc.jsx
-            ├── professor/
-            │   ├── Inicio.jsx
-            │   ├── NovaAvaliacao.jsx
-            │   ├── GerenciarFichas.jsx
-            │   └── Dashboard.jsx
-            ├── aluno/
-            │   ├── MeuGrupo.jsx
-            │   └── HistoricoAvaliacoes.jsx
-            └── coordenador/
-                ├── Materias.jsx
-                └── Professores.jsx
-```
-
----
-
-## Fluxo de uso recomendado
+## Fluxo de uso
 
 ```
 1. Login como Coordenador
@@ -146,21 +133,82 @@ univap-fichas/
 
 3. Login como Professor
    → Nova Ficha → selecionar grupo → preencher avaliação → publicar
+
+4. Login como Aluno
+   → Histórico de Avaliações → ver nota e feedback
 ```
 
 ---
 
-## Personalização visual
+## Funcionalidades por perfil
 
-Qualquer usuário pode customizar a aparência pelo painel de tweaks:
+### Coordenador
+- Cadastrar e gerenciar matérias por curso
+- Cadastrar e gerenciar professores, atribuindo matérias a cada um
 
-- **Cor de destaque**
-- **Fonte da interface**: Roboto, Figtree, Manrope ou Plus Jakarta Sans
-- **Arredondamento dos cards**
+### Aluno
+- Criar e gerenciar grupos (curso, ano, turma, matéria)
+- Adicionar integrantes ao grupo com nome e matrícula
+- Visualizar histórico de avaliações recebidas com nota individual
+
+### Professor
+- Painel inicial com estatísticas e grupos pendentes de avaliação
+- Criar fichas de avaliação: nota por integrante, pontos positivos, pontos de melhoria e anotações
+- Gerenciar fichas criadas com filtros
+- Dashboard com gráficos de avaliações por mês e média por turma
+
+---
+
+## Estrutura de pastas
+
+```
+univap-fichas/
+├── backend/
+│   ├── src/
+│   │   ├── server.ts          # API REST (Express + TypeScript)
+│   │   ├── schemas.ts         # Validação Zod de todas as rotas
+│   │   └── middleware/
+│   │       └── auth.ts        # JWT: signToken, verifyToken, requireRole
+│   ├── db/
+│   │   ├── schema.sql         # Criação das tabelas
+│   │   └── seed.js            # Usuários iniciais
+│   ├── .env                   # Credenciais locais (não versionado)
+│   └── package.json
+└── univap/
+    ├── index.html             # Entry point — carrega scripts em ordem
+    ├── styles/
+    │   └── main.css
+    └── src/
+        ├── App.jsx            # Raiz — autenticação e roteamento
+        ├── data/
+        │   ├── api.js         # Cliente HTTP (fetch + JWT)
+        │   ├── mock.js        # Enums: cursos, anos, turmas
+        │   └── store.js       # Utilitários compartilhados (fmtDataBR)
+        ├── components/
+        │   ├── UI.jsx         # Componentes reutilizáveis
+        │   ├── Layout.jsx     # AppShell, Sidebar, Header
+        │   ├── Icon.jsx
+        │   └── TweaksPanel.jsx
+        └── screens/
+            ├── Login.jsx
+            ├── Misc.jsx
+            ├── professor/
+            ├── aluno/
+            └── coordenador/
+```
+
+---
+
+## Segurança
+
+- Senhas armazenadas com bcrypt (salt 10)
+- Autenticação via JWT com expiração de 1 dia
+- Todas as rotas protegidas por `verifyToken`
+- Rotas de escrita verificam role e dono do recurso
+- Credenciais nunca versionadas (`.env` no `.gitignore`)
 
 ---
 
 ## Autor
 
-Projeto escolar — Colégio Univap  
-Desenvolvido com React puro (sem build system) para fins de aprendizado e demonstração.
+Projeto escolar — Colégio Univap

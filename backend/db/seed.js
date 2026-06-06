@@ -12,21 +12,24 @@ const pool = new Pool({
 });
 
 async function seed() {
-  const coordSenha = process.env.SEED_COORD_PASS;
-  const alunoSenha = process.env.SEED_ALUNO_PASS;
-  if (!coordSenha || !alunoSenha) {
-    throw new Error('Defina SEED_COORD_PASS e SEED_ALUNO_PASS no .env antes de rodar o seed.');
+  const coordSenha  = process.env.SEED_COORD_PASS;
+  const alunoSenha  = process.env.SEED_ALUNO_PASS;
+  const mateusSenha = process.env.SEED_MATEUS_PASS;
+  if (!coordSenha || !alunoSenha || !mateusSenha) {
+    throw new Error('Defina SEED_COORD_PASS, SEED_ALUNO_PASS e SEED_MATEUS_PASS no .env antes de rodar o seed.');
   }
 
-  const coordHash = await bcrypt.hash(coordSenha, 10);
-  const alunoHash = await bcrypt.hash(alunoSenha, 10);
+  const coordHash  = await bcrypt.hash(coordSenha,  10);
+  const alunoHash  = await bcrypt.hash(alunoSenha,  10);
+  const mateusHash = await bcrypt.hash(mateusSenha, 10);
 
   await pool.query(`
     INSERT INTO usuarios (email, senha, nome, role, matricula) VALUES
-      ('coord@univap.com', $1, 'Coord. Técnico',  'coordenador', NULL),
-      ('gui@univap.com',   $2, 'Guilherme Souza', 'aluno',       '50240001')
+      ('coord@univap.com',  $1, 'Coord. Técnico',  'coordenador', NULL),
+      ('gui@univap.com',    $2, 'Guilherme Souza', 'aluno',       '50240001'),
+      ('mateus@univap.com', $3, 'Mateus Ricardo',  'aluno',       '50240609')
     ON CONFLICT (email) DO UPDATE SET matricula = EXCLUDED.matricula
-  `, [coordHash, alunoHash]);
+  `, [coordHash, alunoHash, mateusHash]);
 
   console.log('Seed concluído! Usuários padrão criados.');
   await pool.end();
