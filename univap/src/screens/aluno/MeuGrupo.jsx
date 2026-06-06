@@ -101,6 +101,7 @@ function MeuGrupo({ user }) {
   return (
     <GerenciarGrupo
       grupo={grupos[grupoAtivo]}
+      user={user}
       onVoltar={() => setGrupoAtivo(null)}
       onAtualizar={(g) => onAtualizarGrupo(g)}
       onExcluir={() => onExcluirGrupo(grupos[grupoAtivo].id)}
@@ -201,7 +202,7 @@ function CriarGrupoForm({ user, grupos, onSalvar, onCancelar }) {
 }
 
 /* ── Gerenciar grupo existente ──────────────────────────────────────────── */
-function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
+function GerenciarGrupo({ grupo, user, onVoltar, onAtualizar, onExcluir }) {
   const toast = useToast();
   const [novoNome, setNovoNome] = useState("");
   const [novaMatricula, setNovaMatricula] = useState("");
@@ -210,10 +211,21 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
 
   useEffect(() => {
     if (novaMatricula.length < 4) return;
+    const mat = novaMatricula.trim();
+    if (mat === user.matricula) {
+      toast("Você já está no grupo como líder.", "warn");
+      setNovaMatricula("");
+      return;
+    }
+    if (grupo.integrantes.some(m => m.matricula === mat)) {
+      toast("Este aluno já está no grupo.", "warn");
+      setNovaMatricula("");
+      return;
+    }
     const timer = setTimeout(async () => {
       setBuscando(true);
       try {
-        const res = await apiBuscarAluno(novaMatricula);
+        const res = await apiBuscarAluno(mat);
         setNovoNome(res.nome);
       } catch (_) {
         /* não encontrado — deixa o campo livre para digitação manual */
@@ -229,9 +241,14 @@ function GerenciarGrupo({ grupo, onVoltar, onAtualizar, onExcluir }) {
       toast("Informe nome e matrícula do integrante.", "warn");
       return;
     }
+    const mat = novaMatricula.trim();
+    if (mat === user.matricula || grupo.integrantes.some(m => m.matricula === mat)) {
+      toast("Este aluno já está no grupo.", "warn");
+      return;
+    }
     const atualizado = {
       ...grupo,
-      integrantes: [...grupo.integrantes, { nome: novoNome.trim(), matricula: novaMatricula.trim() }],
+      integrantes: [...grupo.integrantes, { nome: novoNome.trim(), matricula: mat }],
     };
     onAtualizar(atualizado);
     setNovoNome("");
