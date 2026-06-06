@@ -96,7 +96,7 @@ function App() {
     switch (view) {
       case "inicio":    return <ProfInicio user={auth} go={setView} />;
       case "nova":      return <NovaAvaliacao user={auth} />;
-      case "fichas":    return <GerenciarFichas user={auth} onView={setViewAval} />;
+      case "fichas":    return <GerenciarFichas user={auth} />;
       case "dashboard": return <Dashboard onView={setViewAval} />;
       case "relatorios":return <ComingSoon title="Relatórios" sub="Geração de folhas de projeto" icon="fileText" />;
       case "perfil":    return <ComingSoon title="Perfil" sub="Dados da conta" icon="user" />;

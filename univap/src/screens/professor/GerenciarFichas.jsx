@@ -1,5 +1,5 @@
 /* Univap Fichas — Gerenciar Fichas */
-function GerenciarFichas({ user, onView }) {
+function GerenciarFichas({ user }) {
   const toast = useToast();
   const [todasAvals, setTodasAvals] = useState([]);
   const [grupos, setGrupos] = useState([]);
