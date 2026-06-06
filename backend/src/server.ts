@@ -170,6 +170,17 @@ app.put('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Reques
   const client: PoolClient = await pool.connect();
   try {
     await client.query('BEGIN');
+    const { rows: ownG } = await client.query<{ criador_email: string }>(
+      'SELECT criador_email FROM grupos WHERE id=$1', [req.params.id]
+    );
+    if (!ownG.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Grupo não encontrado.' });
+    }
+    if (ownG[0].criador_email !== req.user!.email) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'Sem permissão.' });
+    }
     await client.query(
       'UPDATE grupos SET nome=$1, curso=$2, ano=$3, turma=$4, materia=$5 WHERE id=$6',
       [body.nome, body.curso, body.ano, body.turma, body.materia ?? null, req.params.id]
@@ -193,6 +204,11 @@ app.put('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Reques
 
 app.delete('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Request, res: Response) => {
   try {
+    const { rows: own } = await pool.query<{ criador_email: string }>(
+      'SELECT criador_email FROM grupos WHERE id=$1', [req.params.id]
+    );
+    if (!own.length) return res.status(404).json({ error: 'Grupo não encontrado.' });
+    if (own[0].criador_email !== req.user!.email) return res.status(403).json({ error: 'Sem permissão.' });
     await pool.query('DELETE FROM grupos WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
@@ -333,6 +349,17 @@ app.put('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req
   const client: PoolClient = await pool.connect();
   try {
     await client.query('BEGIN');
+    const { rows: ownA } = await client.query<{ professor_email: string }>(
+      'SELECT professor_email FROM avaliacoes WHERE id=$1', [req.params.id]
+    );
+    if (!ownA.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Avaliação não encontrada.' });
+    }
+    if (ownA[0].professor_email !== req.user!.email) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'Sem permissão.' });
+    }
     await client.query(
       `UPDATE avaliacoes SET
          grupo_nome=$1, criador_email=$2, professor_email=$3, professor_nome=$4,
@@ -361,6 +388,11 @@ app.put('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req
 
 app.delete('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req: Request, res: Response) => {
   try {
+    const { rows: own } = await pool.query<{ professor_email: string }>(
+      'SELECT professor_email FROM avaliacoes WHERE id=$1', [req.params.id]
+    );
+    if (!own.length) return res.status(404).json({ error: 'Avaliação não encontrada.' });
+    if (own[0].professor_email !== req.user!.email) return res.status(403).json({ error: 'Sem permissão.' });
     await pool.query('DELETE FROM avaliacoes WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
