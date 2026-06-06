@@ -16,16 +16,24 @@ import {
   ProfessorUpdateSchema,
 } from './schemas';
 
+/* ── Env validation ──────────────────────────────────────────────────────── */
+const REQUIRED_ENV = ['JWT_SECRET', 'DB_HOST', 'DB_NAME', 'DB_USER'] as const;
+const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missing.length) {
+  console.error(`Variáveis de ambiente ausentes: ${missing.join(', ')}`);
+  process.exit(1);
+}
+
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }));
 app.use(express.json());
 
 const pool = new Pool({
-  host:     process.env.DB_HOST     || 'localhost',
+  host:     process.env.DB_HOST,
   port:     parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME     || 'univap_fichas',
-  user:     process.env.DB_USER     || 'postgres',
-  password: process.env.DB_PASS     || '',
+  database: process.env.DB_NAME,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASS || '',
 });
 
 /* ── Types ───────────────────────────────────────────────────────────────── */
