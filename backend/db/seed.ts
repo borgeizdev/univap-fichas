@@ -1,21 +1,25 @@
 /* Seed inicial: cria usuários padrão (coordenador e aluno demo) */
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
-const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
+import path from 'path';
+import dotenv from 'dotenv';
+import { Pool } from 'pg';
+import bcrypt from 'bcrypt';
+
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const pool = new Pool({
-  host:     process.env.DB_HOST || 'localhost',
-  port:     parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME || 'univap_fichas',
-  user:     process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASS || '',
+  host:     process.env.DB_HOST     || 'localhost',
+  port:     parseInt(process.env.DB_PORT || '5432'),
+  database: process.env.DB_NAME     || 'univap_fichas',
+  user:     process.env.DB_USER     || 'postgres',
+  password: process.env.DB_PASS     || '',
 });
 
-async function seed() {
-  const coordSenha  = process.env.SEED_COORD_PASS;
-  const guiNasc     = process.env.SEED_GUI_NASC;
-  const mateusNasc  = process.env.SEED_MATEUS_NASC;
-  const miguelNasc  = process.env.SEED_MIGUEL_NASC;
+async function seed(): Promise<void> {
+  const coordSenha = process.env.SEED_COORD_PASS;
+  const guiNasc    = process.env.SEED_GUI_NASC;
+  const mateusNasc = process.env.SEED_MATEUS_NASC;
+  const miguelNasc = process.env.SEED_MIGUEL_NASC;
+
   if (!coordSenha || !guiNasc || !mateusNasc || !miguelNasc) {
     throw new Error('Defina SEED_COORD_PASS, SEED_GUI_NASC, SEED_MATEUS_NASC e SEED_MIGUEL_NASC no .env antes de rodar o seed.');
   }
