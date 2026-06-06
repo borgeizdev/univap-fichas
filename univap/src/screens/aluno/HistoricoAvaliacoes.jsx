@@ -10,7 +10,10 @@ function HistoricoAvaliacoes({ user }) {
 
   useEffect(() => {
     apiGetAvals()
-      .then(avals => setAvaliacoes(avals.filter(a => a.criadorEmail === user.email)))
+      .then(avals => setAvaliacoes(avals.filter(a =>
+        a.criadorEmail === user.email ||
+        (a.integrantesAval || []).some(x => x.nome === user.nome)
+      )))
       .catch(e => toast(e.message || "Erro ao carregar avaliações.", "error"));
   }, [user.email]);
 
