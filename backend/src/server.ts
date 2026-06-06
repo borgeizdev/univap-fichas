@@ -208,6 +208,21 @@ app.post('/api/grupos', verifyToken, requireRole('aluno'), async (req: Request, 
   const client: PoolClient = await pool.connect();
   try {
     await client.query('BEGIN');
+    if (body.materia) {
+      const matriculas = body.integrantes.map(m => m.matricula);
+      const { rows: conflito } = await client.query<{ matricula: string }>(
+        `SELECT i.matricula FROM integrantes i
+         JOIN grupos g ON g.id = i.grupo_id
+         WHERE g.materia = $1 AND i.matricula = ANY($2::text[])`,
+        [body.materia, matriculas]
+      );
+      if (conflito.length) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          error: `Aluno(s) já em outro grupo com a matéria "${body.materia}": ${conflito.map(c => c.matricula).join(', ')}.`,
+        });
+      }
+    }
     await client.query(
       'INSERT INTO grupos (id, nome, curso, ano, turma, materia, criador_email) VALUES ($1,$2,$3,$4,$5,$6,$7)',
       [body.id, body.nome, body.curso, body.ano, body.turma, body.materia ?? null, body.criadorEmail]
@@ -244,6 +259,21 @@ app.put('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Reques
     if (ownG[0].criador_email !== req.user!.email) {
       await client.query('ROLLBACK');
       return res.status(403).json({ error: 'Sem permissão.' });
+    }
+    if (body.materia) {
+      const matriculas = body.integrantes.map(m => m.matricula);
+      const { rows: conflito } = await client.query<{ matricula: string }>(
+        `SELECT i.matricula FROM integrantes i
+         JOIN grupos g ON g.id = i.grupo_id
+         WHERE g.materia = $1 AND i.matricula = ANY($2::text[]) AND g.id != $3`,
+        [body.materia, matriculas, req.params.id]
+      );
+      if (conflito.length) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          error: `Aluno(s) já em outro grupo com a matéria "${body.materia}": ${conflito.map(c => c.matricula).join(', ')}.`,
+        });
+      }
     }
     await client.query(
       'UPDATE grupos SET nome=$1, curso=$2, ano=$3, turma=$4, materia=$5 WHERE id=$6',
