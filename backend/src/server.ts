@@ -92,6 +92,16 @@ const fmtUsuario = (row: UsuarioRow) => ({
    PUBLIC ROUTES  (sem token)
 ══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Health ──────────────────────────────────────────────────────────────── */
+app.get('/api/health', async (_req: Request, res: Response) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ ok: true });
+  } catch {
+    res.status(503).json({ ok: false });
+  }
+});
+
 /* ── Auth ────────────────────────────────────────────────────────────────── */
 app.post('/api/auth/login', async (req: Request, res: Response) => {
   const body = validate(LoginSchema, req.body, res);
