@@ -47,7 +47,7 @@ function Login({ onLogin, dark, onToggleTheme }) {
         <a className="uv-login-forgot" href="#" onClick={(e) => e.preventDefault()}>Esqueceu sua senha?</a>
 
         <p className="uv-login-hint">
-          Demo — coord: coord@univap.com / 123coord · aluno: gui@univap.com / 123aluno
+          Demo — coord: coord@univap.com / 123coord · aluno: gui@univap.com / 25082008 (troca de senha obrigatória no 1º acesso)
           · professores são criados pelo coordenador
         </p>
       </form>
