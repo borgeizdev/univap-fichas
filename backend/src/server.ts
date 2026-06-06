@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcrypt';
 import { Pool, PoolClient } from 'pg';
 import { signToken, verifyToken, requireRole } from './middleware/auth';
@@ -103,7 +104,9 @@ app.get('/api/health', async (_req: Request, res: Response) => {
 });
 
 /* ── Auth ────────────────────────────────────────────────────────────────── */
-app.post('/api/auth/login', async (req: Request, res: Response) => {
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false });
+
+app.post('/api/auth/login', loginLimiter, async (req: Request, res: Response) => {
   const body = validate(LoginSchema, req.body, res);
   if (!body) return;
   try {
