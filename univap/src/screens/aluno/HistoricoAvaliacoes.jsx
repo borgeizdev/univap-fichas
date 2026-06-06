@@ -12,7 +12,7 @@ function HistoricoAvaliacoes({ user }) {
     apiGetAvals()
       .then(avals => setAvaliacoes(avals.filter(a =>
         a.criadorEmail === user.email ||
-        (a.integrantesAval || []).some(x => x.nome === user.nome)
+        (a.integrantesAval || []).some(x => x.matricula === user.matricula)
       )))
       .catch(e => toast(e.message || "Erro ao carregar avaliações.", "error"));
   }, [user.email]);
@@ -66,7 +66,7 @@ function HistoricoAvaliacoes({ user }) {
       ) : (
         <div className="uv-hist-list">
           {filtered.map(a => (
-            <HistCard key={a.id} aval={a} userName={user.nome} onClick={() => setDetalhe(a)} />
+            <HistCard key={a.id} aval={a} userMatricula={user.matricula} onClick={() => setDetalhe(a)} />
           ))}
         </div>
       )}
@@ -74,8 +74,8 @@ function HistoricoAvaliacoes({ user }) {
   );
 }
 
-function HistCard({ aval, userName, onClick }) {
-  const minhaAval = aval.integrantesAval?.find(x => x.nome === userName);
+function HistCard({ aval, userMatricula, onClick }) {
+  const minhaAval = aval.integrantesAval?.find(x => x.matricula === userMatricula);
   const nota = minhaAval?.nota ?? aval.nota;
   return (
     <button className="uv-hist-card" onClick={onClick} type="button">
@@ -100,7 +100,7 @@ function HistCard({ aval, userName, onClick }) {
 }
 
 function DetalheAvaliacao({ aval, user, onVoltar }) {
-  const minhaAval = aval.integrantesAval?.find(x => x.nome === user.nome);
+  const minhaAval = aval.integrantesAval?.find(x => x.matricula === user.matricula);
 
   return (
     <>

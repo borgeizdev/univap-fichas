@@ -144,7 +144,7 @@ function CriarGrupoForm({ user, grupos, onSalvar, onCancelar }) {
       nome: gerarNomeGrupo(f.ano, f.turma, grupos),
       id: crypto.randomUUID(),
       criadorEmail: user.email,
-      integrantes: [{ nome: user.nome, matricula: "—", lider: true }],
+      integrantes: [{ nome: user.nome, matricula: user.matricula || "—", lider: true }],
     });
   };
 

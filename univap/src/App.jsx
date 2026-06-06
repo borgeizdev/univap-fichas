@@ -46,8 +46,8 @@ function App() {
     r.style.setProperty("--uv-card-radius", (t.cardRadius || 16) + "px");
   }, [dark, t.accent, t.font, t.cardRadius]);
 
-  const login = (role, email, nome, materias) => {
-    setAuth({ role, email, nome, materias: materias || [] });
+  const login = (role, email, nome, materias, matricula) => {
+    setAuth({ role, email, nome, materias: materias || [], matricula: matricula || null });
     const defaultView = role === "professor" ? "inicio"
       : role === "coordenador" ? "materias"
       : "grupo";

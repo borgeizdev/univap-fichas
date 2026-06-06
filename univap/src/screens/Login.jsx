@@ -11,7 +11,7 @@ function Login({ onLogin, dark, onToggleTheme }) {
     setLoading(true);
     try {
       const user = await apiLogin(email.trim().toLowerCase(), senha);
-      onLogin(user.role, user.email, user.nome, user.materias);
+      onLogin(user.role, user.email, user.nome, user.materias, user.matricula);
     } catch (err) {
       setError(err.message || "E-mail ou senha incorretos.");
     } finally {
