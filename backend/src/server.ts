@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcrypt';
@@ -106,7 +106,7 @@ app.get('/api/health', async (_req: Request, res: Response) => {
 /* ── Auth ────────────────────────────────────────────────────────────────── */
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false });
 
-app.post('/api/auth/login', loginLimiter, async (req: Request, res: Response) => {
+app.post('/api/auth/login', loginLimiter, async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(LoginSchema, req.body, res);
   if (!body) return;
   try {
@@ -124,11 +124,11 @@ app.post('/api/auth/login', loginLimiter, async (req: Request, res: Response) =>
     const token = signToken({ id: u.id, email: u.email, role: u.role, nome: u.nome, matricula: u.matricula || null, trocar_senha: u.trocar_senha ?? false });
     res.json({ ...fmtUsuario(u), token });
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
-app.put('/api/auth/trocar-senha', verifyToken, async (req: Request, res: Response) => {
+app.put('/api/auth/trocar-senha', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   const { novaSenha } = req.body;
   if (!novaSenha || typeof novaSenha !== 'string' || novaSenha.length < 6) {
     return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres.' });
@@ -141,7 +141,7 @@ app.put('/api/auth/trocar-senha', verifyToken, async (req: Request, res: Respons
     );
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
@@ -150,7 +150,7 @@ app.put('/api/auth/trocar-senha', verifyToken, async (req: Request, res: Respons
 ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Me ──────────────────────────────────────────────────────────────────── */
-app.get('/api/me', verifyToken, async (req: Request, res: Response) => {
+app.get('/api/me', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { rows } = await pool.query<UsuarioRow>(
       'SELECT * FROM usuarios WHERE id = $1', [req.user!.id]
@@ -158,12 +158,12 @@ app.get('/api/me', verifyToken, async (req: Request, res: Response) => {
     if (!rows.length) return res.status(404).json({ error: 'Usuário não encontrado.' });
     res.json(fmtUsuario(rows[0]));
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
 /* ── Grupos  (GET: qualquer role | POST/PUT/DELETE: aluno) ───────────────── */
-app.get('/api/grupos', verifyToken, async (req: Request, res: Response) => {
+app.get('/api/grupos', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   const { role, email, matricula } = req.user!;
   const isAluno = role === 'aluno';
   try {
@@ -198,11 +198,11 @@ app.get('/api/grupos', verifyToken, async (req: Request, res: Response) => {
       integrantes:  g.integrantes,
     })));
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
-app.post('/api/grupos', verifyToken, requireRole('aluno'), async (req: Request, res: Response) => {
+app.post('/api/grupos', verifyToken, requireRole('aluno'), async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(GrupoCreateSchema, req.body, res);
   if (!body) return;
   const client: PoolClient = await pool.connect();
@@ -222,13 +222,13 @@ app.post('/api/grupos', verifyToken, requireRole('aluno'), async (req: Request, 
     res.status(201).json({ id: body.id });
   } catch (e) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   } finally {
     client.release();
   }
 });
 
-app.put('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Request, res: Response) => {
+app.put('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(GrupoUpdateSchema, req.body, res);
   if (!body) return;
   const client: PoolClient = await pool.connect();
@@ -260,13 +260,13 @@ app.put('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Reques
     res.json({ ok: true });
   } catch (e) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   } finally {
     client.release();
   }
 });
 
-app.delete('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Request, res: Response) => {
+app.delete('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { rows: own } = await pool.query<{ criador_email: string }>(
       'SELECT criador_email FROM grupos WHERE id=$1', [req.params.id]
@@ -276,21 +276,21 @@ app.delete('/api/grupos/:id', verifyToken, requireRole('aluno'), async (req: Req
     await pool.query('DELETE FROM grupos WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
 /* ── Disciplinas  (GET: qualquer role | POST/PUT/DELETE: coordenador) ─────── */
-app.get('/api/disciplinas', verifyToken, async (_req: Request, res: Response) => {
+app.get('/api/disciplinas', verifyToken, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const { rows } = await pool.query('SELECT * FROM disciplinas ORDER BY curso, nome');
     res.json(rows);
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
-app.post('/api/disciplinas', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
+app.post('/api/disciplinas', verifyToken, requireRole('coordenador'), async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(DisciplinaSchema, req.body, res);
   if (!body) return;
   try {
@@ -302,11 +302,11 @@ app.post('/api/disciplinas', verifyToken, requireRole('coordenador'), async (req
   } catch (e) {
     const err = e as PgError;
     if (err.code === '23505') return res.status(409).json({ error: 'Matéria já cadastrada para este curso.' });
-    res.status(500).json({ error: err.message });
+    next(e);
   }
 });
 
-app.put('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
+app.put('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(DisciplinaSchema, req.body, res);
   if (!body) return;
   try {
@@ -315,21 +315,21 @@ app.put('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), async (
   } catch (e) {
     const err = e as PgError;
     if (err.code === '23505') return res.status(409).json({ error: 'Matéria já cadastrada para este curso.' });
-    res.status(500).json({ error: err.message });
+    next(e);
   }
 });
 
-app.delete('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
+app.delete('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     await pool.query('DELETE FROM disciplinas WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
 /* ── Avaliações  (GET: qualquer role | POST: professor) ──────────────────── */
-app.get('/api/avaliacoes', verifyToken, async (req: Request, res: Response) => {
+app.get('/api/avaliacoes', verifyToken, async (req: Request, res: Response, next: NextFunction) => {
   const { professor, disciplina, de, ate } = req.query as Record<string, string | undefined>;
   const params: (string)[] = [];
   const conditions: string[] = [];
@@ -384,11 +384,11 @@ app.get('/api/avaliacoes', verifyToken, async (req: Request, res: Response) => {
       })),
     })));
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
-app.post('/api/avaliacoes', verifyToken, requireRole('professor'), async (req: Request, res: Response) => {
+app.post('/api/avaliacoes', verifyToken, requireRole('professor'), async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(AvaliacaoCreateSchema, req.body, res);
   if (!body) return;
   const client: PoolClient = await pool.connect();
@@ -413,13 +413,13 @@ app.post('/api/avaliacoes', verifyToken, requireRole('professor'), async (req: R
     res.status(201).json({ id: body.id });
   } catch (e) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   } finally {
     client.release();
   }
 });
 
-app.put('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req: Request, res: Response) => {
+app.put('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(AvaliacaoUpdateSchema, req.body, res);
   if (!body) return;
   const client: PoolClient = await pool.connect();
@@ -456,13 +456,13 @@ app.put('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req
     res.json({ ok: true });
   } catch (e) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   } finally {
     client.release();
   }
 });
 
-app.delete('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req: Request, res: Response) => {
+app.delete('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { rows: own } = await pool.query<{ professor_email: string }>(
       'SELECT professor_email FROM avaliacoes WHERE id=$1', [req.params.id]
@@ -472,23 +472,23 @@ app.delete('/api/avaliacoes/:id', verifyToken, requireRole('professor'), async (
     await pool.query('DELETE FROM avaliacoes WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
 /* ── Professores  (GET: coordenador | POST/PUT/DELETE: coordenador) ──────── */
-app.get('/api/professores', verifyToken, requireRole('coordenador'), async (_req: Request, res: Response) => {
+app.get('/api/professores', verifyToken, requireRole('coordenador'), async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const { rows } = await pool.query<UsuarioRow>(
       "SELECT id, email, nome, materias FROM usuarios WHERE role='professor' ORDER BY nome"
     );
     res.json(rows.map(p => ({ id: p.id, nome: p.nome, email: p.email, materias: p.materias || [] })));
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
 });
 
-app.post('/api/professores', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
+app.post('/api/professores', verifyToken, requireRole('coordenador'), async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(ProfessorCreateSchema, req.body, res);
   if (!body) return;
   try {
@@ -501,11 +501,11 @@ app.post('/api/professores', verifyToken, requireRole('coordenador'), async (req
   } catch (e) {
     const err = e as PgError;
     if (err.code === '23505') return res.status(409).json({ error: 'Já existe um professor com este e-mail.' });
-    res.status(500).json({ error: err.message });
+    next(e);
   }
 });
 
-app.put('/api/professores/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
+app.put('/api/professores/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response, next: NextFunction) => {
   const body = validate(ProfessorUpdateSchema, req.body, res);
   if (!body) return;
   try {
@@ -525,17 +525,23 @@ app.put('/api/professores/:id', verifyToken, requireRole('coordenador'), async (
   } catch (e) {
     const err = e as PgError;
     if (err.code === '23505') return res.status(409).json({ error: 'Já existe um professor com este e-mail.' });
-    res.status(500).json({ error: err.message });
+    next(e);
   }
 });
 
-app.delete('/api/professores/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response) => {
+app.delete('/api/professores/:id', verifyToken, requireRole('coordenador'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     await pool.query('DELETE FROM usuarios WHERE id=$1', [req.params.id]);
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+    next(e);
   }
+});
+
+/* ── Global error handler ────────────────────────────────────────────────── */
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: err.message });
 });
 
 /* ── Start ───────────────────────────────────────────────────────────────── */
