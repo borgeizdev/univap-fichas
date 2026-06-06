@@ -32,6 +32,12 @@ function App() {
   useEffect(() => { saveState({ auth, view, dark }); }, [auth, view, dark]);
 
   useEffect(() => {
+    const handle = () => { setAuth(null); setView("grupo"); };
+    window.addEventListener("univap:401", handle);
+    return () => window.removeEventListener("univap:401", handle);
+  }, []);
+
+  useEffect(() => {
     const r = document.documentElement;
     r.setAttribute("data-theme", dark ? "dark" : "light");
     r.style.setProperty("--uv-primary", t.accent);

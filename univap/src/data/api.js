@@ -14,6 +14,7 @@ async function _req(method, path, body) {
 
   if (r.status === 401) {
     localStorage.removeItem(TOKEN_KEY);
+    window.dispatchEvent(new CustomEvent("univap:401"));
   }
 
   if (!r.ok) {
