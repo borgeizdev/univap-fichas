@@ -163,7 +163,9 @@ app.get('/api/me', verifyToken, async (req: Request, res: Response) => {
 });
 
 /* ── Grupos  (GET: qualquer role | POST/PUT/DELETE: aluno) ───────────────── */
-app.get('/api/grupos', verifyToken, async (_req: Request, res: Response) => {
+app.get('/api/grupos', verifyToken, async (req: Request, res: Response) => {
+  const { role, email, matricula } = req.user!;
+  const isAluno = role === 'aluno';
   try {
     const { rows } = await pool.query<GrupoRow>(`
       SELECT g.*,
@@ -179,9 +181,12 @@ app.get('/api/grupos', verifyToken, async (_req: Request, res: Response) => {
         ) AS integrantes
       FROM grupos g
       LEFT JOIN integrantes i ON i.grupo_id = g.id
+      ${isAluno ? `WHERE g.criador_email = $1 OR EXISTS (
+        SELECT 1 FROM integrantes im WHERE im.grupo_id = g.id AND im.matricula = $2
+      )` : ''}
       GROUP BY g.id
       ORDER BY g.created_at DESC
-    `);
+    `, isAluno ? [email, matricula ?? ''] : []);
     res.json(rows.map(g => ({
       id:           g.id,
       nome:         g.nome,
