@@ -87,8 +87,12 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
   const body = validate(LoginSchema, req.body, res);
   if (!body) return;
   try {
+    const isEmail = body.login.includes('@');
     const { rows } = await pool.query<UsuarioRow>(
-      'SELECT * FROM usuarios WHERE email = $1', [body.email]
+      isEmail
+        ? 'SELECT * FROM usuarios WHERE email = $1'
+        : 'SELECT * FROM usuarios WHERE matricula = $1',
+      [isEmail ? body.login.toLowerCase() : body.login]
     );
     if (!rows.length) return res.status(401).json({ error: 'Credenciais inválidas.' });
     const u = rows[0];

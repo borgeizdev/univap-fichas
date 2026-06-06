@@ -1,6 +1,6 @@
 /* Univap Fichas — Login */
 function Login({ onLogin, dark, onToggleTheme }) {
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -10,10 +10,10 @@ function Login({ onLogin, dark, onToggleTheme }) {
     setError("");
     setLoading(true);
     try {
-      const user = await apiLogin(email.trim().toLowerCase(), senha);
+      const user = await apiLogin(login.trim(), senha);
       onLogin(user.role, user.email, user.nome, user.materias, user.matricula);
     } catch (err) {
-      setError(err.message || "E-mail ou senha incorretos.");
+      setError(err.message || "Credenciais inválidas.");
     } finally {
       setLoading(false);
     }
@@ -30,9 +30,9 @@ function Login({ onLogin, dark, onToggleTheme }) {
           <p className="uv-login-sub">Sistema de Avaliação Acadêmica</p>
         </div>
 
-        <Field label="E-mail">
-          <Input type="email" icon="user" placeholder="ex: coord@univap.com"
-            value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
+        <Field label="E-mail ou Matrícula">
+          <Input type="text" icon="user" placeholder="ex: coord@univap.com"
+            value={login} onChange={(e) => setLogin(e.target.value)} autoComplete="username" />
         </Field>
         <Field label="Senha">
           <PasswordInput placeholder="••••••••" value={senha}

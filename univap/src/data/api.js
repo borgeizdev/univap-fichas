@@ -30,8 +30,8 @@ const _put  = (p, b) => _req("PUT",    p, b);
 const _del  = (p)    => _req("DELETE", p);
 
 /* Auth */
-const apiLogin = async (email, senha) => {
-  const data = await _post("/auth/login", { email, senha });
+const apiLogin = async (login, senha) => {
+  const data = await _post("/auth/login", { login, senha });
   if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
   return data;
 };

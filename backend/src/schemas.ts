@@ -32,7 +32,7 @@ const IntegranteAvalSchema = z.object({
 
 /* ── Auth ────────────────────────────────────────────────────────────────── */
 export const LoginSchema = z.object({
-  email: z.string().email().max(255).toLowerCase().trim(),
+  login: z.string().min(1).max(255).trim(),
   senha: z.string().min(1).max(128),
 });
 
