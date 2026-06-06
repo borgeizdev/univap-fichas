@@ -1,7 +1,15 @@
 /* Univap Fichas — misc: ficha viewer + placeholders */
 function ViewFichaModal({ aval, onClose }) {
-  const grupo = loadGrupos().find(g => g.nome === aval.grupoNome);
-  const integrantes = grupo ? grupo.integrantes : [];
+  const [integrantes, setIntegrantes] = useState([]);
+
+  useEffect(() => {
+    apiGetGrupos()
+      .then(grupos => {
+        const grupo = grupos.find(g => g.nome === aval.grupoNome);
+        setIntegrantes(grupo ? grupo.integrantes : []);
+      })
+      .catch(() => {});
+  }, [aval.grupoNome]);
   return (
     <div className="uv-drawer-scrim" onClick={onClose}>
       <aside className="uv-drawer uv-anim-right" onClick={(e) => e.stopPropagation()}>
