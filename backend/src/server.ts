@@ -149,6 +149,19 @@ app.put('/api/auth/trocar-senha', verifyToken, async (req: Request, res: Respons
    PROTECTED ROUTES  (verifyToken em todas abaixo)
 ══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Me ──────────────────────────────────────────────────────────────────── */
+app.get('/api/me', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query<UsuarioRow>(
+      'SELECT * FROM usuarios WHERE id = $1', [req.user!.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Usuário não encontrado.' });
+    res.json(fmtUsuario(rows[0]));
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
 /* ── Grupos  (GET: qualquer role | POST/PUT/DELETE: aluno) ───────────────── */
 app.get('/api/grupos', verifyToken, async (_req: Request, res: Response) => {
   try {
