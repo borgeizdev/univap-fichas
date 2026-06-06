@@ -31,7 +31,7 @@ function Login({ onLogin, dark, onToggleTheme }) {
         </div>
 
         <Field label="E-mail ou Matrícula">
-          <Input type="text" icon="user" placeholder="ex: coord@univap.com"
+          <Input type="text" icon="user" placeholder="seu e-mail ou matrícula"
             value={login} onChange={(e) => setLogin(e.target.value)} autoComplete="username" />
         </Field>
         <Field label="Senha">
@@ -45,11 +45,6 @@ function Login({ onLogin, dark, onToggleTheme }) {
           {loading ? "Entrando…" : "Entrar"}
         </Button>
         <a className="uv-login-forgot" href="#" onClick={(e) => e.preventDefault()}>Esqueceu sua senha?</a>
-
-        <p className="uv-login-hint">
-          Demo — coord: coord@univap.com / 123coord · aluno: gui@univap.com / 25082008 (troca de senha obrigatória no 1º acesso)
-          · professores são criados pelo coordenador
-        </p>
       </form>
       <p className="uv-login-foot">© 2026 Univap — Todos os direitos reservados.</p>
     </div>
