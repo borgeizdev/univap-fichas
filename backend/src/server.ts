@@ -26,7 +26,7 @@ if (missing.length) {
 }
 
 const app = express();
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }));
+app.use(cors({ origin: (origin, cb) => cb(null, !origin || origin.startsWith('http://localhost')) }));
 app.use(express.json());
 
 const pool = new Pool({
