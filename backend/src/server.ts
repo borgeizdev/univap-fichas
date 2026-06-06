@@ -329,7 +329,18 @@ app.delete('/api/disciplinas/:id', verifyToken, requireRole('coordenador'), asyn
 });
 
 /* ── Avaliações  (GET: qualquer role | POST: professor) ──────────────────── */
-app.get('/api/avaliacoes', verifyToken, async (_req: Request, res: Response) => {
+app.get('/api/avaliacoes', verifyToken, async (req: Request, res: Response) => {
+  const { professor, disciplina, de, ate } = req.query as Record<string, string | undefined>;
+  const params: (string)[] = [];
+  const conditions: string[] = [];
+
+  if (professor)   { params.push(professor);   conditions.push(`a.professor_email = $${params.length}`); }
+  if (disciplina)  { params.push(disciplina);  conditions.push(`a.disciplina = $${params.length}`); }
+  if (de)          { params.push(de);          conditions.push(`a.data >= $${params.length}`); }
+  if (ate)         { params.push(ate);         conditions.push(`a.data <= $${params.length}`); }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
   try {
     const { rows } = await pool.query<AvaliacaoRow>(`
       SELECT a.*,
@@ -346,9 +357,10 @@ app.get('/api/avaliacoes', verifyToken, async (_req: Request, res: Response) => 
         ) AS integrantes_aval
       FROM avaliacoes a
       LEFT JOIN integrantes_aval ia ON ia.avaliacao_id = a.id
+      ${where}
       GROUP BY a.id
       ORDER BY a.data DESC, a.created_at DESC
-    `);
+    `, params);
     res.json(rows.map(a => ({
       id:              a.id,
       grupoNome:       a.grupo_nome,
