@@ -1,5 +1,5 @@
 /* Univap Fichas — cliente de API */
-const API_BASE = "http://localhost:3001/api";
+const API_BASE = `http://${window.location.hostname}:3001/api`;
 const TOKEN_KEY = "univap_token";
 
 async function _req(method, path, body) {

@@ -26,7 +26,7 @@ if (missing.length) {
 }
 
 const app = express();
-app.use(cors({ origin: (origin, cb) => cb(null, !origin || origin.startsWith('http://localhost')) }));
+app.use(cors({ origin: true }));
 app.use(express.json());
 
 const pool = new Pool({
