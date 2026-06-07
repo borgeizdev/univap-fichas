@@ -567,6 +567,7 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 @media (max-width: 1080px) {
   .uv-grid-4 { grid-template-columns: repeat(2, 1fr); }
 }
+
 @media (max-width: 860px) {
   .uv-topbar-brand { padding: 0 18px; height: 100px; }
   .uv-topbar-logo  { height: 40px; }
@@ -575,15 +576,59 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
   .uv-grid-3, .uv-grid-2, .uv-charts { grid-template-columns: 1fr; }
   .uv-filters { grid-template-columns: 1fr 1fr; }
   .uv-materias-layout { grid-template-columns: 1fr; }
+  .uv-grupo-info-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+@media (max-width: 640px) {
+  .uv-content-inner { padding: 20px 16px; }
+  .uv-page-title { font-size: 22px; }
+  .uv-stat-value { font-size: 26px; }
+  .uv-filters { grid-template-columns: 1fr; }
+  .uv-integrante-body { grid-template-columns: 1fr; }
+  .uv-card { padding: 18px; }
+  .uv-table th { padding: 10px 14px; }
+  .uv-table td { padding: 12px 14px; }
+  .uv-drawer-head { padding: 16px 18px 14px; }
+  .uv-drawer-body { padding: 16px 18px; }
+  .uv-drawer-foot { padding: 12px 18px; }
+  .uv-hist-card { padding: 14px 16px; gap: 12px; }
+}
+
 @media (max-width: 560px) {
-  .uv-content-inner { padding: 24px 18px; }
-  .uv-topbar-brand  { padding: 0 14px; gap: 14px; }
+  .uv-content-inner { padding: 18px 14px; }
+  .uv-page-title { font-size: 20px; }
+  .uv-topbar-brand  { padding: 0 14px; gap: 12px; height: 80px; }
+  .uv-topbar-logo   { height: 36px; }
   .uv-topbar-user   { display: none; }
-  .uv-topbar-nav    { padding: 0 10px; overflow-x: auto; }
-  .uv-nav-link      { padding: 0 12px; font-size: 12px; }
-  .uv-grid-4 { grid-template-columns: 1fr; }
+  .uv-topbar-nav    { padding: 0; }
+  /* nav links viram scroll horizontal; ghost-actions ficam à direita */
+  .uv-topbar-ghost-actions { order: 2; padding: 0 8px; flex-shrink: 0; }
+  .uv-topbar-ghost-btn span { display: none; }
+  .uv-topbar-ghost-btn { padding: 8px 10px; }
+  .uv-topbar-nav-links {
+    order: 1; flex: 1;
+    position: static; pointer-events: auto;
+    justify-content: flex-start;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .uv-topbar-nav-links::-webkit-scrollbar { display: none; }
+  .uv-nav-link { padding: 0 14px; font-size: 12.5px; flex-shrink: 0; }
+  .uv-grid-4 { grid-template-columns: 1fr 1fr; }
   .uv-filters { grid-template-columns: 1fr; }
   .uv-view-meta { grid-template-columns: 1fr; }
+  .uv-add-member-row { grid-template-columns: 1fr; gap: 10px; }
+  .uv-toasts { right: 12px; left: 12px; bottom: 16px; }
+  .uv-toast { min-width: unset; }
+}
+
+@media (max-width: 400px) {
+  .uv-content-inner { padding: 14px 12px; }
+  .uv-card { padding: 14px; }
+  .uv-topbar-brand { height: 70px; gap: 10px; }
+  .uv-topbar-logo { height: 30px; }
+  .uv-stat-value { font-size: 22px; }
+  .uv-grid-4 { grid-template-columns: 1fr; }
   .uv-shortcuts { grid-template-columns: 1fr; }
+  .uv-table th { padding: 8px 10px; font-size: 10px; }
+  .uv-table td { padding: 10px; font-size: 13px; }
 }
