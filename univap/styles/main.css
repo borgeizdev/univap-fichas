@@ -597,22 +597,24 @@ ol, ul { margin: 0; padding: 0; list-style: none; }
 @media (max-width: 560px) {
   .uv-content-inner { padding: 18px 14px; }
   .uv-page-title { font-size: 20px; }
+  /* topbar brand */
   .uv-topbar-brand  { padding: 0 14px; gap: 12px; height: 80px; }
   .uv-topbar-logo   { height: 36px; }
   .uv-topbar-user   { display: none; }
-  .uv-topbar-nav    { padding: 0; }
-  /* nav links viram scroll horizontal; ghost-actions ficam à direita */
-  .uv-topbar-ghost-actions { order: 2; padding: 0 8px; flex-shrink: 0; }
+  /* ghost-actions: canto superior direito do topbar inteiro */
+  .uv-topbar-nav { padding: 0; position: static; }
+  .uv-topbar-ghost-actions { position: absolute; top: 14px; right: 14px; z-index: 10; gap: 2px; }
   .uv-topbar-ghost-btn span { display: none; }
-  .uv-topbar-ghost-btn { padding: 8px 10px; }
+  .uv-topbar-ghost-btn { padding: 7px 9px; }
+  /* nav links: largura total, centralizadas */
   .uv-topbar-nav-links {
-    order: 1; flex: 1;
     position: static; pointer-events: auto;
-    justify-content: flex-start;
+    justify-content: center;
     overflow-x: auto; scrollbar-width: none;
   }
   .uv-topbar-nav-links::-webkit-scrollbar { display: none; }
-  .uv-nav-link { padding: 0 14px; font-size: 12.5px; flex-shrink: 0; }
+  .uv-nav-link { padding: 0 12px; font-size: 12px; flex-shrink: 0; }
+  /* grids e layout */
   .uv-grid-4 { grid-template-columns: 1fr 1fr; }
   .uv-filters { grid-template-columns: 1fr; }
   .uv-view-meta { grid-template-columns: 1fr; }
